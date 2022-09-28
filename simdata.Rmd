@@ -11,7 +11,7 @@ library(Hmisc)
 
 #### testes
 ```{r TESTE}
-
+file_path = "/home/gui/TCC/R/meu_pacote/teste1.csv"
 nHarvests = 20
 nphases = 3
 nAreas = 3
@@ -29,8 +29,23 @@ area_fase[[3]][[1]] # area3-fase1
 # e assim por diante
 
 
+## verificar a necessidade de classificar todas as variáves e 
+##  adicionar chamada de função para classificaçõ na função criaDataFrames()
+
+class_names <- c("MB", "B", "M", "A")
+teste_class_pr <- def_classes(4,area_fase[[3]][[1]]['colheita'])
+area_fase[[3]][[1]]['colheita'] <- classficator(area_fase[[3]][[1]]['colheita'], teste_class_pr, class_names)
+
+print(area_fase[[3]][[1]])
+
+write.csv(area_fase[[3]][[1]], file_path, row.names = FALSE)
+
+
+
 ```
 
+####
+####criaDataFrames
 ```{r}
 criaDataFrames <- function (dados){
 fase <- list()
@@ -52,7 +67,7 @@ return(area)
 }
 ```
 
-####
+
 #### defVars
 ```{r}
 #Definição das variáveis: nome, valor mínimo, valor máximo, tipo (up=1,osc=2,const=3)
@@ -397,6 +412,42 @@ f_minmax <- function(x){
 }
 
 ```
+
+#### def_classes
+```{r}
+#ana/gui
+# função para dividir df em classes proporcional à amplitude de valores 
+def_classes <- function(n_classes, df_nome) {
+	val_max <- max(df_nome, na.rm = TRUE)
+	val_min <- min(df_nome, na.rm = TRUE)
+	amp_total <- val_max - val_min
+	amp_classe <- amp_total / n_classes
+	classes <- vector()
+	classes <- val_min + amp_classe
+	for (i in 1:(n_classes -1)) { 
+		classes[i+1] <- classes[i] + amp_classe; classes
+	}
+	nome <- deparse(substitute(df_nome))
+	message(nome, " - Classes")	
+	return(classes)
+}
+```
+
+
+#### classficator
+```{r}
+#gui
+# substitui valores pelo nome da classe a qual o valor pertence 
+classficator <- function(input, varclass, class_names) {
+        input <- replace(input, input <= varclass[1], class_names[1])
+    for (i in 2 : length(varclass)){
+        input <- replace(input, input > varclass[i-1] &
+            input <= varclass[i], class_names[i])
+    }
+    return(input)
+    }
+```
+
 
 #### vars_in
 ```{r}
