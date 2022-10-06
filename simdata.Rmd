@@ -1,51 +1,22 @@
+---
+output:
+  pdf_document: 
+    keep_tex: yes
+  html_document: default
+---
+
 ## Pacote R com as funções de treinamento, execução e visualização de dados
 
 ##### importações
+
 ```{R}
-library(seqHMM)
-library(HMM)
+library(bnlearn)
 library(Hmisc)
 ```
 
-
-
-#### testes
-```{r TESTE}
-file_path = "/home/gui/TCC/R/meu_pacote/teste1.csv"
-nHarvests = 20
-nphases = 3
-nAreas = 3
-nVars = 3
-#BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...)
-# debug(BuildSimulationData)
-teste <- BuildSimulationData(nHarvests, nphases, nAreas, nVars)
-
-teste
-
-area_fase <- criaDataFrames(teste)
-area_fase[[1]][[1]] # area1-fase1
-area_fase[[2]][[1]] # area2-fase1
-area_fase[[3]][[1]] # area3-fase1
-# e assim por diante
-
-
-## verificar a necessidade de classificar todas as variáves e 
-##  adicionar chamada de função para classificaçõ na função criaDataFrames()
-
-class_names <- c("MB", "B", "M", "A")
-teste_class_pr <- def_classes(4,area_fase[[3]][[1]]['colheita'])
-area_fase[[3]][[1]]['colheita'] <- classficator(area_fase[[3]][[1]]['colheita'], teste_class_pr, class_names)
-
-print(area_fase[[3]][[1]])
-
-write.csv(area_fase[[3]][[1]], file_path, row.names = FALSE)
-
-
-
-```
-
-####
+#### 
 ####criaDataFrames
+
 ```{r}
 criaDataFrames <- function (dados){
 fase <- list()
@@ -67,8 +38,8 @@ return(area)
 }
 ```
 
-
 #### defVars
+
 ```{r}
 #Definição das variáveis: nome, valor mínimo, valor máximo, tipo (up=1,osc=2,const=3)
 
@@ -113,8 +84,8 @@ defVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
 
 ```
 
-
 #### BuildSimulationData
+
 ```{r}
 BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
   areasList <- list()
@@ -171,8 +142,8 @@ for(a in 1 : nAreas){
 
 ```
 
-
 #### setSimVarValues
+
 ```{r}
 setSimVarValues <- function (harvests, areatype, prodvars, nPhases) {
   # allHarvestValues = setSimVarValues(nHarvests,areasList[[a]][2],prodVariables,nPhases)
@@ -404,6 +375,7 @@ if(length(prodvars)==3){
 ```
 
 #### f_minmax
+
 ```{r}
 #gui
 #faz a normalização dos dados
@@ -414,6 +386,7 @@ f_minmax <- function(x){
 ```
 
 #### def_classes
+
 ```{r}
 #ana/gui
 # função para dividir df em classes proporcional à amplitude de valores 
@@ -433,8 +406,8 @@ def_classes <- function(n_classes, df_nome) {
 }
 ```
 
-
 #### classficator
+
 ```{r}
 #gui
 # substitui valores pelo nome da classe a qual o valor pertence 
@@ -448,10 +421,62 @@ classficator <- function(input, varclass, class_names) {
     }
 ```
 
-
 #### vars_in
+
 ```{r}
 vars_in <- function (n_var, v_min, v_max, v_names) {
   # desenvolver aqui depois uma função pra organizar os dados de entrada
 }
+```
+
+
+#### testes
+```{r TESTE}
+file_path = "/home/gui/TCC/R/meu_pacote/teste1.csv"
+nHarvests = 20
+nphases = 3
+nAreas = 1
+nVars = 3
+#BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...)
+# debug(BuildSimulationData)
+teste <- BuildSimulationData(nHarvests, nphases, nAreas, nVars)
+
+teste
+
+area_fase <- criaDataFrames(teste)
+area_fase[[1]][[1]] # area1-fase1
+area_fase[[2]][[1]] # area2-fase1
+area_fase[[3]][[1]] # area3-fase1
+# e assim por diante
+
+
+print(area_fase[[1]][[1]])
+
+dag <- hc(area_fase[[1]][[1]])
+print(dag)
+plot(dag)
+
+# write.csv(area_fase[[3]][[1]], file_path, row.names = FALSE)
+
+
+## verificar a necessidade de classificar todas as variáves e 
+## se sim
+##  adicionar chamada de função para classificaçõ na função criaDataFrames()
+
+## Substituir por classes:
+## acontece que:  variable variavel_1 is not supported in bnlearn (type: character).
+
+# 
+# 
+# class_names <- c("MB", "B", "M", "A")
+# teste_class <- def_classes(4,area_fase[[1]][[1]]['colheita'])
+# area_fase[[1]][[1]]['colheita'] <- classficator(area_fase[[1]][[1]]['colheita'], teste_class, class_names)
+# teste_class <- def_classes(4,area_fase[[1]][[1]]['variavel_1'])
+# area_fase[[1]][[1]]['variavel_1'] <- classficator(area_fase[[1]][[1]]['colheita'], teste_class, class_names)
+# teste_class <- def_classes(4,area_fase[[1]][[1]]['variavel_2'])
+# area_fase[[1]][[1]]['variavel_2'] <- classficator(area_fase[[1]][[1]]['colheita'], teste_class, class_names)
+# teste_class <- def_classes(4,area_fase[[1]][[1]]['variavel_3'])
+# area_fase[[1]][[1]]['variavel_3'] <- classficator(area_fase[[1]][[1]]['colheita'], teste_class, class_names)
+
+
 ```

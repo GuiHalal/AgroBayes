@@ -1,3 +1,6 @@
 .RData
 .Rhistory
 *.csv
+*.log
+*.tex
+*.pdf
