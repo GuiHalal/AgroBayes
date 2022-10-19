@@ -245,6 +245,7 @@ if(length(prodvars)==3){
       colheitas[[h]][,length(prodvars)+1] =  producaoPhase
     }
   }
+  
   #Área 5: o peso da produção decresce com uma ponderação dos valores de X2:
   #Prod = 1* X21 + 0,8* X22 + 0,6*X23 + 0,4*X24 + 0,2*X25
   else if (areatype == 5) {
@@ -426,15 +427,18 @@ classficator <- function(input, varclass, names_class) {
 
 ```{r}
 CriaRedes <- function(area_fases){
-  #1:"MB" - Muito Baixo
-  #2: "B" - Baixo
-  #3: "M" - Média
-  #4: "A" - Alta
+  ## Era pra ser:
+    # class_names <- c("MB", "B", "M", "A")
+  ## Acontece que:  
+    # variable variavel_1 is not supported in bnlearn (type: character).
+  ## Portanto mapeei conforme abaixo:
+    # 1:"MB" - Muito Baixo
+    # 2: "B" - Baixo
+    # 3: "M" - Média
+    # 4: "A" - Alta
+  
   dagsf <- list()
   class_names <- c(1, 2, 3, 4)
-  
-  #falta um for pra interar pelas áreas pra transformar os valores em classes. 
-  #não tenho certeza se é necessário...
   
   for(fase in 1:length(area_fases[[1]])){
     for(var in 1:dim(area_fases[[1]][[fase]])[2]){
@@ -442,12 +446,13 @@ CriaRedes <- function(area_fases){
       area_fases[[1]][[fase]][var] <- classficator(area_fases[[1]][[fase]][var], class, class_names)
     }
   }
-  
+
   for(fase in 1:length(area_fases[[1]])){
-    df_teste <- area_fase[[1]][[fase]][dim(area_fase[[1]][[fase]])[1],]
-    df_treino <- area_fase[[1]][[fase]][1:dim(area_fase[[1]][[fase]])[1]-1,]
-    dagsf[fase] <- hc(df_treino)
+    df_teste <- area_fases[[1]][[fase]][dim(area_fases[[1]][[fase]])[1],]
+    df_treino <- area_fases[[1]][[fase]][1:dim(area_fases[[1]][[fase]])[1]-1,]
+    dagsf[[fase]] <- hc(df_treino)
   }
+    print(dagsf)
   return(dagsf)
 }
 ```
@@ -464,52 +469,46 @@ areas <- list()
 #BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...)
 # debug(BuildSimulationData)
 teste <- BuildSimulationData(nHarvests, nphases, nAreas, nVars)
-
+teste
 for(area in 1:nAreas){
   areas[area] <- criaDataFrames(teste[area])
 }
 
+ 
+
 for(area in 1:nAreas){
-  dags[area] <- CriaRedes(teste3[area])
+  dags[[area]] <- CriaRedes(areas[area])
 }
 
 
-# Warning in dagsf[fase] <- hc(df_treino) :
-#   número de itens para para substituir não é um múltiplo do comprimento do substituto
-# Warning in dagsf[fase] <- hc(df_treino) :
-#   número de itens para para substituir não é um múltiplo do comprimento do substituto
-# Warning in dagsf[fase] <- hc(df_treino) :
-#   número de itens para para substituir não é um múltiplo do comprimento do substituto
-# Error in area_fase[[1]][[fase]] : índice fora de limites
+
+Tdag <- pc.stable(areas[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL, alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = TRUE)
+Tdag <- gs(areas[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL, alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = TRUE)
+Tdag <- iamb(areas[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL, alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+Tdag <- hc(areas[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL, alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = TRUE)
+
+Tdag
+plot(Tdag)
+bn = bn.fit(Tdag, areas[[1]][[1]])
+bn
 
 
+#Area_1_type_5
+  #Área 5: o peso da produção decresce com uma ponderação dos valores de X2:
+#Area_2_type_6
+  #Área 6: o peso da produção cresce com uma ponderação dos valores de X1:
 
-### aqui pra baixo é rascunho
-# area_fase[[1]][[1]] # area1-fase1
-# area_fase[[2]][[1]] # area2-fase1
-# area_fase[[3]][[1]] # area3-fase1
-# e assim por diante
+plot(dags[[2]][[5]])
 
-#N LINHAS DO DF
-dim(area_fase3[[1]][[1]])
-#N DE DF/FASES
-length(area_fase[[]])
-#N DE ÁREAS
-length(area_fase3)
-area_fase
-
-
-
-
-df_teste <- area_fase[[1]][[1]][dim(area_fase[[1]][[1]])[1],]
-df_teste['variavel_1']
-df_treino <- area_fase[[1]][[1]][1:dim(area_fase[[1]][[1]])[1]-1,]
-df_treino
-#print(area_fase[[1]][[1]])
-
-dag <- hc(df_treino)
 dag <- tabu(df_treino)
 
+#AINDA NÃO SEI COMO GERAR AS REDES DE FORMA AUTOMÁTICA SATISFATORIAMENTE, 
+# PORÉM, DEPOIS DE GERADAS VOU PRECISAR USAR ELA DE MODO AUTOMÁTICO TBM
+# E PRA ISSO EU NÃO FAÇO A MENOR INDEIA DE COMO FAZER
+
+
+
+#teste da função de inferência:
 bn = bn.fit(dag, df_teste)
 cpquery(bn, event = ((variavel_1 == df_teste['variavel_1']) & (variavel_2 == df_teste['variavel_2']) & (variavel_3 == df_teste['variavel_3']) ), evidence = (colheita == 1), n=1)
 cpquery(bn, event = ((variavel_1 == df_teste['variavel_1']) & (variavel_2 == df_teste['variavel_2']) & (variavel_3 == df_teste['variavel_3']) ), evidence = (colheita == 2), n=1)
@@ -517,76 +516,7 @@ cpquery(bn, event = ((variavel_1 == df_teste['variavel_1']) & (variavel_2 == df_
 cpquery(bn, event = ((variavel_1 == df_teste['variavel_1']) & (variavel_2 == df_teste['variavel_2']) & (variavel_3 == df_teste['variavel_3']) ), evidence = (colheita == 4), n=1)
 
 
-plot(dag)
-
-
-dag <- hc(area_fase[[1]][[1]])
-bn = bn.fit(dag, area_fase[[1]][[1]])
-cpquery(bn, event = ((variavel_1 == area_fase[[1]][[1]]['variavel_1']) & (variavel_2 == area_fase[[1]][[1]]['variavel_2']) & (variavel_3 == area_fase[[1]][[1]]['variavel_3'])), evidence = (colheita == 0.7038936), n=20)
-
-
-
-
-dag <- hc(area_fase[[1]][[1]])
-bn = bn.fit(dag, area_fase[[1]][[1]])
-cpquery(bn, event = ((variavel_1 == area_fase[[1]][[1]]['variavel_1']) & (variavel_2 == area_fase[[1]][[1]]['variavel_2'])), evidence = (colheita == 1), n=20)
-cpquery(bn, event = ((variavel_1 == area_fase[[1]][[1]]['variavel_1'])), evidence = (colheita == 2), n=20)
-cpquery(bn, event = ((variavel_1 == area_fase[[1]][[1]]['variavel_1'])), evidence = (colheita == 3), n=20)
-cpquery(bn, event = ((variavel_1 == area_fase[[1]][[1]]['variavel_1'])), evidence = (colheita == 4), n=20)
-
-
-
-
- #Área 5: o peso da produção decresce com uma ponderação dos valores de X2:
-
-#tem que ver o DAG que gera aqui, se já tem relação com o tipo de área.(?) 
-
-dag = set.arc(dag, from = "variavel_2", to = "colheita")
-dag = set.arc(dag, from = "variavel_1", to = "colheita")
-print(bn)
-
-plot(dag)
-
-## ok gerei o dag. AGORA tem que treinar, arrumar ela e fazer a predição; 
-
-## ESSA predição que tem que armazenar numa série pra tentar imputar na rede dinâmica.
-
-
-# Examples
-## the workflow of Bayesian network modelling in bnlearn:
-# choose the data set to work on...
-      #   data(learning.test)
-# ... choose an algorithm and learn the structure of the network from the data...
-      #   net = hc(learning.test)
-# ... plot it...
-## Not run: graphviz.plot(net)
-# ... learn the parameters of the network...
-      #   bn = bn.fit(net, learning.test)
-# ... explore the network with a classic barchart...
-## Not run: graphviz.chart(bn)
-# ... and perform inference to answer any question that interests you!
-      #   cpquery(bn, event = (A == "a"), evidence = (C == "a"))
-
-# write.csv(area_fase[[3]][[1]], file_path, row.names = FALSE)
-
-## verificar a necessidade de classificar todas as variáves e 
-## se sim
-##  adicionar chamada de função para classificaçõ na função criaDataFrames()
-
-## Substituir por classes:
-## acontece que:  variable variavel_1 is not supported in bnlearn (type: character).
-
-# 
-# 
-# class_names <- c("MB", "B", "M", "A")
-# teste_class <- def_classes(4,area_fase[[1]][[1]]['colheita'])
-# area_fase[[1]][[1]]['colheita'] <- classficator(area_fase[[1]][[1]]['colheita'], teste_class, class_names)
-# teste_class <- def_classes(4,area_fase[[1]][[1]]['variavel_1'])
-# area_fase[[1]][[1]]['variavel_1'] <- classficator(area_fase[[1]][[1]]['colheita'], teste_class, class_names)
-# teste_class <- def_classes(4,area_fase[[1]][[1]]['variavel_2'])
-# area_fase[[1]][[1]]['variavel_2'] <- classficator(area_fase[[1]][[1]]['colheita'], teste_class, class_names)
-# teste_class <- def_classes(4,area_fase[[1]][[1]]['variavel_3'])
-# area_fase[[1]][[1]]['variavel_3'] <- classficator(area_fase[[1]][[1]]['colheita'], teste_class, class_names)
-
+## As predição vão ter que ser armazenadas numa série 
+    ## pra tentar imputar na rede dinâmica.
 
 ```
