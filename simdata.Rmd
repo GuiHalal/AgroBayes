@@ -12,6 +12,7 @@ output:
 ```{R}
 library(bnlearn)
 library(Hmisc)
+library(dbnlearn)
 ```
 
 #### 
@@ -22,14 +23,14 @@ criaDataFrames <- function (dados){
 fase <- list()
 area <- list()
 
-for(k in 1:length(teste)){
-for(j in 1:length(teste[[1]][[1]][,1])){
-  area_phase <- matrix(0, nrow=length(teste[[1]]),ncol=length(teste[[1]][[1]][1,]))
-for(i in 1:length(teste[[1]])) {
-area_phase[i,] <- teste[[1]][[i]][j,]
+for(k in 1:length(dados)){
+for(j in 1:length(dados[[1]][[1]][,1])){
+  area_phase <- matrix(0, nrow=length(dados[[1]]),ncol=length(dados[[1]][[1]][1,]))
+for(i in 1:length(dados[[1]])) {
+area_phase[i,] <- dados[[1]][[i]][j,]
 }
   fase[[j]] <- data.frame(area_phase)
-  colnames(fase[[j]]) <- colnames(teste[[1]][[1]])
+  colnames(fase[[j]]) <- colnames(dados[[1]][[1]])
   rownames(fase[[j]]) <- rownames(fase[[j]])
 }
   area[[k]] <- fase
@@ -205,13 +206,12 @@ for(h in 1 : harvests){
        
 ##### POR DEFAULT CONSIDERA-SE 3 VARIÁVES:
 if(length(prodvars)==3){
-       
+  print('AQUI')
   ##### Cálculo das áreas: 3 variáveis
   
   #Área 1: o peso de produção varia linearmente com os valores de todas as variáveis 
   #nas duas primeiras fases fenológicas
   #Prod = (X11 + X12 + X21 + X22 + X31 + X32)
-
 
   if (areatype == 1) {
     
@@ -272,6 +272,7 @@ if(length(prodvars)==3){
     }
   }
 }else{
+  print('ALI')
   #SE NÃO TEMOS QUE DEFINIR REGRAS MAIS ALEATÓREAS, PORÉM REGISTRAR AS REGRAS DEFINIDAS
     
   #Área 1: o peso de produção varia linearmente com os valores de todas as variáveis 
@@ -411,53 +412,162 @@ def_classes <- function(n_classes, df_nome) {
 ```{r}
 #gui
 # substitui valores pelo nome da classe a qual o valor pertence 
-classficator <- function(input, varclass, class_names) {
-        input <- replace(input, input <= varclass[1], class_names[1])
+classficator <- function(input, varclass, names_class) {
+        input <- replace(input, input <= varclass[1], names_class[1])
     for (i in 2 : length(varclass)){
         input <- replace(input, input > varclass[i-1] &
-            input <= varclass[i], class_names[i])
+            input <= varclass[i], names_class[i])
     }
     return(input)
     }
 ```
 
-#### vars_in
+#### CriaRedes
 
 ```{r}
-vars_in <- function (n_var, v_min, v_max, v_names) {
-  # desenvolver aqui depois uma função pra organizar os dados de entrada
+CriaRedes <- function(area_fases){
+  #1:"MB" - Muito Baixo
+  #2: "B" - Baixo
+  #3: "M" - Média
+  #4: "A" - Alta
+  dagsf <- list()
+  class_names <- c(1, 2, 3, 4)
+  
+  #falta um for pra interar pelas áreas pra transformar os valores em classes. 
+  #não tenho certeza se é necessário...
+  
+  for(fase in 1:length(area_fases[[1]])){
+    for(var in 1:dim(area_fases[[1]][[fase]])[2]){
+      class <- def_classes(4,area_fases[[1]][[fase]][var])
+      area_fases[[1]][[fase]][var] <- classficator(area_fases[[1]][[fase]][var], class, class_names)
+    }
+  }
+  
+  for(fase in 1:length(area_fases[[1]])){
+    df_teste <- area_fase[[1]][[fase]][dim(area_fase[[1]][[fase]])[1],]
+    df_treino <- area_fase[[1]][[fase]][1:dim(area_fase[[1]][[fase]])[1]-1,]
+    dagsf[fase] <- hc(df_treino)
+  }
+  return(dagsf)
 }
 ```
-
 
 #### testes
 ```{r TESTE}
 file_path = "/home/gui/TCC/R/meu_pacote/teste1.csv"
 nHarvests = 20
-nphases = 3
-nAreas = 1
+nphases = 5
+nAreas = 2
 nVars = 3
+dags <- list()  
+areas <- list()  
 #BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...)
 # debug(BuildSimulationData)
 teste <- BuildSimulationData(nHarvests, nphases, nAreas, nVars)
 
-teste
+for(area in 1:nAreas){
+  areas[area] <- criaDataFrames(teste[area])
+}
 
-area_fase <- criaDataFrames(teste)
-area_fase[[1]][[1]] # area1-fase1
-area_fase[[2]][[1]] # area2-fase1
-area_fase[[3]][[1]] # area3-fase1
+for(area in 1:nAreas){
+  dags[area] <- CriaRedes(teste3[area])
+}
+
+
+# Warning in dagsf[fase] <- hc(df_treino) :
+#   número de itens para para substituir não é um múltiplo do comprimento do substituto
+# Warning in dagsf[fase] <- hc(df_treino) :
+#   número de itens para para substituir não é um múltiplo do comprimento do substituto
+# Warning in dagsf[fase] <- hc(df_treino) :
+#   número de itens para para substituir não é um múltiplo do comprimento do substituto
+# Error in area_fase[[1]][[fase]] : índice fora de limites
+
+
+
+### aqui pra baixo é rascunho
+# area_fase[[1]][[1]] # area1-fase1
+# area_fase[[2]][[1]] # area2-fase1
+# area_fase[[3]][[1]] # area3-fase1
 # e assim por diante
 
+#N LINHAS DO DF
+dim(area_fase3[[1]][[1]])
+#N DE DF/FASES
+length(area_fase[[]])
+#N DE ÁREAS
+length(area_fase3)
+area_fase
 
-print(area_fase[[1]][[1]])
 
-dag <- hc(area_fase[[1]][[1]])
-print(dag)
+
+
+df_teste <- area_fase[[1]][[1]][dim(area_fase[[1]][[1]])[1],]
+df_teste['variavel_1']
+df_treino <- area_fase[[1]][[1]][1:dim(area_fase[[1]][[1]])[1]-1,]
+df_treino
+#print(area_fase[[1]][[1]])
+
+dag <- hc(df_treino)
+dag <- tabu(df_treino)
+
+bn = bn.fit(dag, df_teste)
+cpquery(bn, event = ((variavel_1 == df_teste['variavel_1']) & (variavel_2 == df_teste['variavel_2']) & (variavel_3 == df_teste['variavel_3']) ), evidence = (colheita == 1), n=1)
+cpquery(bn, event = ((variavel_1 == df_teste['variavel_1']) & (variavel_2 == df_teste['variavel_2']) & (variavel_3 == df_teste['variavel_3']) ), evidence = (colheita == 2), n=1)
+cpquery(bn, event = ((variavel_1 == df_teste['variavel_1']) & (variavel_2 == df_teste['variavel_2']) & (variavel_3 == df_teste['variavel_3']) ), evidence = (colheita == 3), n=1)
+cpquery(bn, event = ((variavel_1 == df_teste['variavel_1']) & (variavel_2 == df_teste['variavel_2']) & (variavel_3 == df_teste['variavel_3']) ), evidence = (colheita == 4), n=1)
+
+
 plot(dag)
 
-# write.csv(area_fase[[3]][[1]], file_path, row.names = FALSE)
 
+dag <- hc(area_fase[[1]][[1]])
+bn = bn.fit(dag, area_fase[[1]][[1]])
+cpquery(bn, event = ((variavel_1 == area_fase[[1]][[1]]['variavel_1']) & (variavel_2 == area_fase[[1]][[1]]['variavel_2']) & (variavel_3 == area_fase[[1]][[1]]['variavel_3'])), evidence = (colheita == 0.7038936), n=20)
+
+
+
+
+dag <- hc(area_fase[[1]][[1]])
+bn = bn.fit(dag, area_fase[[1]][[1]])
+cpquery(bn, event = ((variavel_1 == area_fase[[1]][[1]]['variavel_1']) & (variavel_2 == area_fase[[1]][[1]]['variavel_2'])), evidence = (colheita == 1), n=20)
+cpquery(bn, event = ((variavel_1 == area_fase[[1]][[1]]['variavel_1'])), evidence = (colheita == 2), n=20)
+cpquery(bn, event = ((variavel_1 == area_fase[[1]][[1]]['variavel_1'])), evidence = (colheita == 3), n=20)
+cpquery(bn, event = ((variavel_1 == area_fase[[1]][[1]]['variavel_1'])), evidence = (colheita == 4), n=20)
+
+
+
+
+ #Área 5: o peso da produção decresce com uma ponderação dos valores de X2:
+
+#tem que ver o DAG que gera aqui, se já tem relação com o tipo de área.(?) 
+
+dag = set.arc(dag, from = "variavel_2", to = "colheita")
+dag = set.arc(dag, from = "variavel_1", to = "colheita")
+print(bn)
+
+plot(dag)
+
+## ok gerei o dag. AGORA tem que treinar, arrumar ela e fazer a predição; 
+
+## ESSA predição que tem que armazenar numa série pra tentar imputar na rede dinâmica.
+
+
+# Examples
+## the workflow of Bayesian network modelling in bnlearn:
+# choose the data set to work on...
+      #   data(learning.test)
+# ... choose an algorithm and learn the structure of the network from the data...
+      #   net = hc(learning.test)
+# ... plot it...
+## Not run: graphviz.plot(net)
+# ... learn the parameters of the network...
+      #   bn = bn.fit(net, learning.test)
+# ... explore the network with a classic barchart...
+## Not run: graphviz.chart(bn)
+# ... and perform inference to answer any question that interests you!
+      #   cpquery(bn, event = (A == "a"), evidence = (C == "a"))
+
+# write.csv(area_fase[[3]][[1]], file_path, row.names = FALSE)
 
 ## verificar a necessidade de classificar todas as variáves e 
 ## se sim
