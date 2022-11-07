@@ -16,38 +16,89 @@ library(dbnlearn)
 ```
 
 #### 
-####criaDataFrames
+
+#### BuildSimulationData
 
 ```{r}
-criaDataFrames <- function (dados){
-fase <- list()
-area <- list()
+BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
+  
+  
+  areasList <- list()
+  if(is.null(nAreas)){
+    # por padrão gera-se 6 áreas
+    # cada área tem uma relação entre as variáveis e a produção 
+    
+    areanames = c("Area_1", "Area_2", "Area_3", "Area_4", "Area_5", "Area_6")
+    areatype  = c(1,2,3,4,5,6)
+    for (i in 1 : length(areanames)){
+      areasList[[i]] <- c(areanames =  areanames[i], areatype  = areatype[i])
+    }
+  }else{
+    # se for definido o número de áreas, os tipos são atribuidos aleatóriamente
+    for (i in 1 : nAreas){
+      tempType = sample(1:6, 1)
+      #tempType = 5
+      tempName <- paste("Area", i, sep = "_")
+      areasList[[i]] = c(areaName = tempName, areatype = tempType)
+    }
+  }
+  
+  # definição das variáveis pela funcao defVars 
+  defProdVariables = defVars(...)
+ 
+  
+  completeSimValues = list()
+  namesArea = array(dim = length(areasList))
+  
+  for (a in 1:length(areasList)) {
+    # Calcula os valores das variáveis e da producao pela função setSimVarValues
+    
+    #cat("Calculando valores da área ",a,"\n")
+    completeSimValues[[a]] = setSimVarValues(nHarvests, areasList[[a]][2],defProdVariables,nPhases)
+    namesArea[a] = paste("Area", a, "type", areasList[[a]][2], sep = "_")
+  }
+  names(completeSimValues) = namesArea
 
-for(k in 1:length(dados)){
-for(j in 1:length(dados[[1]][[1]][,1])){
-  area_phase <- matrix(0, nrow=length(dados[[1]]),ncol=length(dados[[1]][[1]][1,]))
-for(i in 1:length(dados[[1]])) {
-area_phase[i,] <- dados[[1]][[i]][j,]
-}
-  fase[[j]] <- data.frame(area_phase)
-  colnames(fase[[j]]) <- colnames(dados[[1]][[1]])
-  rownames(fase[[j]]) <- rownames(fase[[j]])
-}
-  area[[k]] <- fase
-}
-return(area)
+  # Normalizando (entre 0 e 1) dados da produção 
+    # DUVIDA: é a abordagem mais correta. (??)
+       
+  temp <- array(dim = length(areasList))
+  i=1
+  for(a in 1 : length(areasList)){
+    for(h in 1 : nHarvests){
+      temp[i] <- completeSimValues[[a]][[h]][1,length(defProdVariables)+1]
+      i=1+i
+    }
+  }
+  
+  i=1
+  temp <- f_minmax(temp)
+  for(a in 1 : length(areasList)){
+    for(h in 1 : nHarvests){
+      completeSimValues[[a]][[h]][,length(defProdVariables)+1] <- temp[i]
+      i=1+i
+    }
+  }
+  
+  return (completeSimValues)
+  
 }
 ```
+
+#### 
 
 #### defVars
 
 ```{r}
-#Definição das variáveis: nome, valor mínimo, valor máximo, tipo (up=1,osc=2,const=3)
+# função para geração das variáveis
+# chamada no escopo da função BuildSimulationData
 
 defVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
   prodVariables = list()
-  
+
+  # Se não for definido o número de variáveis o padrão são as 3 abaixo  
   if(is.null(n_var)){
+    # Definição das variáveis: nome, valor mínimo, valor máximo, tipo 
     # type (up=1,osc=2,const=3)
     prodVariables[[1]] = c("PrecAcum",0,1,1)
     prodVariables[[2]] = c("Insol",0,1,2)
@@ -56,11 +107,13 @@ defVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
   return (prodVariables)
   }else
     if(!is.null(type_var) | !is.null(name_var)){
+      # sendo informado o n de variáveis e o nome e o comportamento delas
+      # as variáveis são geradas conforme abaixo:
       if(length(type_var)!= n_var | length(name_var)!= n_var){
         stop("parâmetros incorretos. Se informados, tipos e nomes de variáveis devem ser informados para todas as variáveis")
       }else{
         for (i in 1 : n_var){
-# type (up=1,osc=2,const=3)
+        # type (up=1,osc=2,const=3)
           if(type_var[i] == 3){
             prodVariables[[i]] = c(name_var[i], -1, 1, type_var[i])
           }else{
@@ -70,6 +123,8 @@ defVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
       }
         return (prodVariables)
         }else{
+          # Sendo informado o n de variáveis, sem mais detalhes a geração 
+          # ocorre de maneira aleatória, conforme abaixo:
           for (i in 1 : n_var){
             tempType = sample(1:3, 1)
             tempName <- paste("x", i, sep = "_" )
@@ -85,74 +140,20 @@ defVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
 
 ```
 
-#### BuildSimulationData
-
-```{r}
-BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
-  areasList <- list()
-  #ver aqui um gerados de quantidade de áreas e atribuidor de tipos
-  if(is.null(nAreas)){
-    areanames = c("Area_1", "Area_2", "Area_3", "Area_4", "Area_5", "Area_6")
-    areatype  = c(1,2,3,4,5,6)
-    for (i in 1 : length(areanames)){
-      areasList[[i]] <- c(areanames =  areanames[i], areatype  = areatype[i])
-    }
-  }else{
-    for (i in 1 : nAreas){
-      tempType = sample(1:6, 1)
-      #tempType = 5
-      tempName <- paste("Area", i, sep = "_")
-      areasList[[i]] = c(areaName = tempName,areatype = tempType)
-    }
-  }
-  prodVariables = defVars(...)
-  
-  #completeSimValues = array(dim=c(length(areanames),nPhases,nHarvests,dim(prodVariables)[2]+1))
-  
-  completeSimValues = list()
-  namesArea = array(dim = length(areasList))
-  
-  for (a in 1:length(areasList)) {
-    cat("Calculando valores da área ",a,"\n")
-    completeSimValues[[a]] = setSimVarValues(nHarvests, areasList[[a]][2],prodVariables,nPhases)
-    namesArea[a] = paste("Area", a, "type", areasList[[a]][2], sep = "_")
-  }
-  names(completeSimValues) = namesArea
-
-# NORMALIZAÇÃO DOS VALORES DE COLHEITA
-       
-temp <- array(dim = nHarvests*nAreas)
-i=1
-for(a in 1 : nAreas){
-    for(h in 1 : nHarvests){
-     temp[i] <- completeSimValues[[a]][[h]][1,length(prodVariables)+1]
-     i=1+i
-    }
-}
-i=1
-temp <- f_minmax(temp)
-for(a in 1 : nAreas){
-    for(h in 1 : nHarvests){
-     completeSimValues[[a]][[h]][,length(prodVariables)+1] <- temp[i]
-     i=1+i
-    }
-  }
-  
-  return (completeSimValues)
-}
-
-```
+#### 
 
 #### setSimVarValues
 
 ```{r}
-setSimVarValues <- function (harvests, areatype, prodvars, nPhases) {
-  # allHarvestValues = setSimVarValues(nHarvests,areasList[[a]][2],prodVariables,nPhases)
-  # [1] "PrecAcum" "0"        "1"        "up" 
- # Definição das variáveis: nome, valor mínimo, valor máximo, tipo (up=1,osc=2,const=3)
+# Função para geração dos valores das variáveis e das colheitas para todas as
+# áreas informadas.
+
+# allHarvestValues = setSimVarValues(nHarvests,areasList[[a]][2],defProdVariables,nPhases)
+setSimVarValues <- function (harvests, areatype, prodvars, nPhases){
   colheitas <-list()
   names_colheitas <- array(dim = harvests)
   
+  # define os nomes das variáveis 
   for(i in 1: harvests){
     fases <- matrix(nrow=nPhases, ncol= length(prodvars)+1)
     colnames(fases) <-  colnames(fases, do.NULL = FALSE, prefix = "variavel_")
@@ -161,38 +162,41 @@ setSimVarValues <- function (harvests, areatype, prodvars, nPhases) {
     colheitas[[i]] = fases
      names_colheitas[i] = paste("colheita", i, sep = "_")
   }
-       names(colheitas) = names_colheitas
+  names(colheitas) = names_colheitas
   
-  #prodValues = matrix(nrow=harvests,ncol=dim(prodvars)[2]*nPhases+1)
-  
-  for (j in 1 : length(prodvars)) {
-    for (i in 1:harvests) {
-      random_value   = runif(1, min=as.numeric(prodvars[[j]][2]), 
-                             max=as.numeric(prodvars[[j]][3]))
+  # gera os valores das variáveis
+  for (var in 1 : length(prodvars)){
+    for (harv in 1:harvests) {
+      random_value   = runif(1, 
+                             min=as.numeric(prodvars[[var]][2]),
+                             max=as.numeric(prodvars[[var]][3]))
       last_value_var = 0
       const_value    = random_value
-      for (k in 1:nPhases) {
+      for (pha in 1:nPhases){
         # type (up=1,osc=2,const=3)
-        if (prodvars[[j]][4]==1) {
+        if (prodvars[[var]][4]==1){
           v_value = random_value + last_value_var
           last_value_var = v_value
-        } else 
-        if (prodvars[[j]][4]==2) {
-          v_value = random_value 
-        } else  
-        if (prodvars[[j]][4]==3) {
-          v_value = const_value
-        }
+        }else
+          if (prodvars[[var]][4]==2){
+            v_value = random_value
+          }else
+            if (prodvars[[var]][4]==3){
+              v_value = const_value
+            }
         
-         colheitas[[i]][k,j] = v_value
-        
-        random_value   = runif(1, min=as.numeric(prodvars[[j]][2]), 
-                           max=as.numeric(prodvars[[j]][3]))
-      }#for k
-    }#for i
-  }#for j
+        colheitas[[harv]][pha,var] = v_value
+        random_value = runif(1,
+                             min=as.numeric(prodvars[[var]][2]), 
+                             max=as.numeric(prodvars[[var]][3]))
+      }#for pha in 1:nPhases
+    }#for harv in 1:harvests
+  }#for var in 1 : length(prodvars)
 
-# normaliza dos dados das variáves antes de calcular so valores de produção        
+# Normalizando (entre 0 e 1 ou 1- e 1, conforme o tipo de variável) 
+# dos dados das variáves antes de calcular so valores de produção  
+       # DUVIDA: é a abordagem mais correta. (??)
+  
 for(h in 1 : harvests){
   for(v in 1 : length(prodvars)){
     if(max(colheitas[[h]][,v]) > 1){
@@ -201,18 +205,16 @@ for(h in 1 : harvests){
   }
 }
 
-   # calcula o valor da produção com base nas relações arbitradas com as variáveis 
+# calcula o valor da produção com base nas relações arbitradas com as variáveis 
   
        
 ##### POR DEFAULT CONSIDERA-SE 3 VARIÁVES:
 if(length(prodvars)==3){
-  print('AQUI')
-  ##### Cálculo das áreas: 3 variáveis
-  
-  #Área 1: o peso de produção varia linearmente com os valores de todas as variáveis 
-  #nas duas primeiras fases fenológicas
-  #Prod = (X11 + X12 + X21 + X22 + X31 + X32)
-
+#  print('AQUI')
+ 
+  # Área 1: o peso de produção varia linearmente com os valores de todas as variáveis 
+  # nas duas primeiras fases fenológicas
+  # Prod = (X11 + X12 + X21 + X22 + X31 + X32)
   if (areatype == 1) {
     
     for (h in 1: harvests){
@@ -220,21 +222,23 @@ if(length(prodvars)==3){
     }
   }
    
-  #Área 2: o peso de produção varia com o quadrado de X1
-  #Prod = (X11^2 + X12^2 + X13^2 + X14^2 + X15^2)
+  # Área 2: o peso de produção varia com o quadrado de X1
+  # Prod = (X11^2 + X12^2 + X13^2 + X14^2 + X15^2)
   else if (areatype == 2) { 
     for(h in 1:harvests) {
         colheitas[[h]][,length(prodvars)+1] = sum((colheitas[[h]][,1])^2)
     }
   }
-  #Área 3: o peso de produção varia com o quadrado de X3
+  
+  # Área 3: o peso de produção varia com o quadrado de X3
   else if (areatype == 3) {
      for(h in 1:harvests) {
         colheitas[[h]][,length(prodvars)+1] = sum((colheitas[[h]][,3])^2)
     }
   }
-  #Área 4: o peso de produção é inversamente proporcional à soma de X1 com X3
-  #Prod = 1/(X11+X13) + 1/(...)
+  
+  # Área 4: o peso de produção é inversamente proporcional à soma de X1 com X3
+  # Prod = 1/(X11+X13) + 1/(...)
   else if (areatype == 4) {
     for(h in 1:harvests) {
        producaoPhase = 0
@@ -246,8 +250,8 @@ if(length(prodvars)==3){
     }
   }
   
-  #Área 5: o peso da produção decresce com uma ponderação dos valores de X2:
-  #Prod = 1* X21 + 0,8* X22 + 0,6*X23 + 0,4*X24 + 0,2*X25
+  # Área 5: o peso da produção decresce com uma ponderação dos valores de X2:
+  # Prod = 1* X21 + 0,8* X22 + 0,6*X23 + 0,4*X24 + 0,2*X25
   else if (areatype == 5) {
     for(h in 1:harvests) {
        producaoPhase = 0
@@ -259,8 +263,9 @@ if(length(prodvars)==3){
       colheitas[[h]][,length(prodvars)+1] =  producaoPhase
     }
   }
-  #Área 6: o peso da produção cresce com uma ponderação dos valores de X1:
-  #Prod = 0,2*X11 + 0,4* X12 + 0,6*X13 + 0,8*X14 + 1*X15
+  
+  # Área 6: o peso da produção cresce com uma ponderação dos valores de X1:
+  # Prod = 0,2*X11 + 0,4* X12 + 0,6*X13 + 0,8*X14 + 1*X15
   else if (areatype == 6) {
     for(h in 1:harvests) {
        producaoPhase = 0
@@ -272,22 +277,22 @@ if(length(prodvars)==3){
       colheitas[[h]][,length(prodvars)+1] =  producaoPhase
     }
   }
-}else{
-  print('ALI')
-  #SE NÃO TEMOS QUE DEFINIR REGRAS MAIS ALEATÓREAS, PORÉM REGISTRAR AS REGRAS DEFINIDAS
-    
-  #Área 1: o peso de produção varia linearmente com os valores de todas as variáveis 
-  #nas duas primeiras fases fenológicas
-  #Prod = (X11 + X12 + X21 + X22 + X31 + X32)
+}else{# se forem definidas mais de 3 variáveis 
 
+#  print('ALI')
+  
+  # Área 1: o peso de produção varia linearmente com os valores
+  # de todas as variáveis nas duas primeiras fases fenológicas
+  # Prod = (X11 + X12 + X21 + X22 + X31 + X32)
 
   if (areatype == 1) {
     for (h in 1: harvests){
       colheitas[[h]][,length(prodvars)+1] = sum(colheitas[[h]][,1:length(prodvars)])
     }
   }
-  #Área 2: o peso de produção varia com o quadrado das variáveis impares 
-  #Prod = Σ(Xi1^2 + Xi2^2 + Xi3^2 + Xi4^2 + Xi5^2) | i=(2k+1), k(0:infinito)
+  
+  # Área 2: o peso de produção varia com o quadrado das variáveis impares 
+  # Prod = Σ(Xi1^2 + Xi2^2 + Xi3^2 + Xi4^2 + Xi5^2) | i=(2k+1), k(0:infinito)
   else if (areatype == 2) { 
     for(h in 1:harvests) {
         producaoVar = 0
@@ -299,8 +304,9 @@ if(length(prodvars)==3){
         colheitas[[h]][,length(prodvars)+1] = producaoVar
     }
   }
-  #Área 3: o peso de produção varia com o quadrado das variáveis pares
-  #Prod = Σ(Xi1^2 + Xi2^2 + Xi3^2 + Xi4^2 + Xi5^2) | i=(2k), k(0:infinito)
+  
+  # Área 3: o peso de produção varia com o quadrado das variáveis pares
+  # Prod = Σ(Xi1^2 + Xi2^2 + Xi3^2 + Xi4^2 + Xi5^2) | i=(2k), k(0:infinito)
   else if (areatype == 3){
     for(h in 1:harvests) {
       producaoVar = 0
@@ -312,8 +318,9 @@ if(length(prodvars)==3){
         colheitas[[h]][,length(prodvars)+1] = producaoVar
     }
   }
-  #Área 4: o peso de produção é inversamente proporcional à soma das variáveis impares
-  #Prod = 1/(X11+X13) + 1/(...)
+  
+  # Área 4: o peso de produção é inversamente proporcional à soma das variáveis impares
+  # Prod = 1/(X11+X13) + 1/(...)
   else if (areatype == 4) {
     for(h in 1:harvests) {
        producaoPhase = 0
@@ -331,8 +338,8 @@ if(length(prodvars)==3){
     }
   }
   
-  #Área 5: o peso da produção decresce com uma ponderação da soma das variáveis ímpares 
-  #Prod = 1* X21 + 0,8* X22 + 0,6*X23 + 0,4*X24 + 0,2*X25
+  # Área 5: o peso da produção decresce com uma ponderação da soma das variáveis ímpares 
+  # Prod = 1* X21 + 0,8* X22 + 0,6*X23 + 0,4*X24 + 0,2*X25
   else if (areatype == 5) {
     for(h in 1:harvests) {
       for(p in 1:nPhases){
@@ -350,8 +357,9 @@ if(length(prodvars)==3){
       colheitas[[h]][,length(prodvars)+1] =  producaoPhase
     }
   }
-  #Área 6: o peso da produção cresce com uma ponderação dos valores das variáveis pares:
-  #Prod = 0,2*X11 + 0,4* X12 + 0,6*X13 + 0,8*X14 + 1*X15
+  
+  # Área 6: o peso da produção cresce com uma ponderação dos valores das variáveis pares:
+  # Prod = 0,2*X11 + 0,4* X12 + 0,6*X13 + 0,8*X14 + 1*X15
   else if (areatype == 6) {
     for(h in 1:harvests) {
       for(p in 1:nPhases){
@@ -376,23 +384,54 @@ if(length(prodvars)==3){
 }
 ```
 
+#### 
+
+#### criaDataFrames
+
+```{r}
+# A entrada das funções do pacote bnlearn são dataframes, portanto esta função
+# cria os dataframes apartir das listas com os dados gerados nas funções abaixo
+
+criaDataFrames <- function (dados){
+fase <- list()
+area <- list()
+
+for(k in 1:length(dados)){
+for(j in 1:length(dados[[1]][[1]][,1])){
+  area_phase <- matrix(0, nrow=length(dados[[1]]),ncol=length(dados[[1]][[1]][1,]))
+for(i in 1:length(dados[[1]])) {
+area_phase[i,] <- dados[[1]][[i]][j,]
+}
+  fase[[j]] <- data.frame(area_phase)
+  colnames(fase[[j]]) <- colnames(dados[[1]][[1]])
+  rownames(fase[[j]]) <- rownames(fase[[j]])
+}
+  area[[k]] <- fase
+}
+return(area)
+}
+```
+
+#### 
+
 #### f_minmax
 
 ```{r}
-#gui
-#faz a normalização dos dados
+# faz a normalização dos dados
 f_minmax <- function(x){
   return((x - min(x))/(max(x)-min(x)))
 }
 
 ```
 
+#### 
+
 #### def_classes
 
 ```{r}
-#ana/gui
 # função para dividir df em classes proporcional à amplitude de valores 
-def_classes <- function(n_classes, df_nome) {
+
+def_classes <- function(n_classes, df_nome){
 	val_max <- max(df_nome, na.rm = TRUE)
 	val_min <- min(df_nome, na.rm = TRUE)
 	amp_total <- val_max - val_min
@@ -408,10 +447,12 @@ def_classes <- function(n_classes, df_nome) {
 }
 ```
 
+#### 
+
 #### classficator
 
 ```{r}
-#gui
+
 # substitui valores pelo nome da classe a qual o valor pertence 
 classficator <- function(input, varclass, names_class) {
         input <- replace(input, input <= varclass[1], names_class[1])
@@ -420,12 +461,15 @@ classficator <- function(input, varclass, names_class) {
             input <= varclass[i], names_class[i])
     }
     return(input)
-    }
+}
 ```
+
+#### 
 
 #### CriaRedes
 
 ```{r}
+### Cria redes pra todas as fases fenológicas da área
 CriaRedes <- function(area_fases){
   ## Era pra ser:
     # class_names <- c("MB", "B", "M", "A")
@@ -446,6 +490,8 @@ CriaRedes <- function(area_fases){
       area_fases[[1]][[fase]][var] <- classficator(area_fases[[1]][[fase]][var], class, class_names)
     }
   }
+# até aqui beleza... a parte de baixo que eu não sei como fazer...
+  
 
   for(fase in 1:length(area_fases[[1]])){
     df_teste <- area_fases[[1]][[fase]][dim(area_fases[[1]][[fase]])[1],]
@@ -458,38 +504,182 @@ CriaRedes <- function(area_fases){
 ```
 
 #### testes
+
 ```{r TESTE}
 file_path = "/home/gui/TCC/R/meu_pacote/teste1.csv"
-nHarvests = 20
+nHarvests = 15
 nphases = 5
 nAreas = 2
 nVars = 3
 dags <- list()  
-areas <- list()  
+# listas para armazenar os dados por área
+areas_treino  <- list()
+areas_teste   <- list()  
 #BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...)
 # debug(BuildSimulationData)
-teste <- BuildSimulationData(nHarvests, nphases, nAreas, nVars)
-teste
-for(area in 1:nAreas){
-  areas[area] <- criaDataFrames(teste[area])
+treino  <- BuildSimulationData(nHarvests, nphases)
+teste   <- BuildSimulationData(nHarvests, nphases)
+
+for(area in 1:length(teste)){
+  areas_treino[area] <- criaDataFrames(treino[area])
+  areas_teste[area] <- criaDataFrames(teste[area])
+  
+}
+names(areas_treino) <- names(treino)
+names(areas_teste) <- names(teste)
+areas_teste[3]
+areas_treino[3]
+substr(names(areas_teste[2]),13,13)
+
+class_names <- c(1, 2, 3, 4)
+  
+for(fase in 1:length(areas_teste[[1]])){
+  for(var in 1:dim(areas_teste[[1]][[fase]])[2]){
+    class <- def_classes(4,areas_teste[[1]][[fase]][var])
+    areas_teste[[1]][[fase]][var] <- classficator(areas_teste[[1]][[fase]][var], class, class_names)
+    }
+  } 
+  
+for(fase in 1:length(areas_treino[[1]])){
+  for(var in 1:dim(areas_treino[[1]][[fase]])[2]){
+    class <- def_classes(4,areas_treino[[1]][[fase]][var])
+    areas_treino[[1]][[fase]][var] <- classficator(areas_treino[[1]][[fase]][var], class, class_names)
+  }
+} 
+
+# identificando o tipo de área gerada pra criar a rede correspondente
+if(substr(names(areas_teste[2]),13,13) == 1){
+  #area tipo 1: 
+  # o peso de produção varia linearmente com os valores de todas as variáveis
+  # nas duas primeiras fases fenológicas
+  #Prod = (X11 + X12 + X21 + X22 + X31 + X32)
+
+
+  
+whitelist = data.frame(from = c("variavel_1", "variavel_2", "variavel_3"), to = c("colheita", "colheita", "colheita"))
+
+blacklist = data.frame(from = c("variavel_1","variavel_1",
+                                "variavel_2", "variavel_2",
+                                "variavel_3", "variavel_3",
+                                "colheita",  "colheita",  "colheita" ), 
+                       to = c("variavel_2", "variavel_3", #from v1 
+                              "variavel_1", "variavel_3", #from v2
+                              "variavel_1", "variavel_2", #from v3
+                              "variavel_1", "variavel_2", "variavel_3" #from col
+                              ))
+whitelist
+blacklist
+areas_treino[[1]][[1]]
+
+
+#Criando DAG manualmente
+  manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
+  arc_set = as.matrix(whitelist)
+  arcs(manual_dag) = arc_set
+  plot(manual_dag)
+
+#Criando DAG pelos métodos do pacote
+  
+  pc.stable_dag_1 <- pc.stable(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL, 
+                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  pc.stable_dag_2 <- pc.stable(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL, 
+                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  gs_dag_1 <- gs(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL,
+     alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  gs_dag_2 <- gs(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL,
+     alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  iamb_dag_1 <- iamb(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL,
+             alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  iamb_dag_2 <- iamb(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL,
+             alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  fast.iamb_dag_1 <- fast.iamb(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL,
+                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  fast.iamb_dag_2 <- fast.iamb(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL,
+                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  inter.iamb_dag_1 <- inter.iamb(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL,
+                   alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  inter.iamb_dag_2 <- inter.iamb(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL,
+                   alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  iamb.fdr_dag_1 <- iamb.fdr(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL,
+                 alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  iamb.fdr_dag_2 <- iamb.fdr(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL,
+                 alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  mmpc_dag_1 <- mmpc(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL,
+             alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  mmpc_dag_2 <- mmpc(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL,
+             alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  si.hiton.pc_dag_1 <- si.hiton.pc(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL,
+                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  
+  si.hiton.pc_dag_2 <- si.hiton.pc(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL,
+                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  hc_dag_1 <-hc(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, debug = FALSE)
+  hc_dag_2 <-hc(areas_treino[[1]][[1]])
+  
+  #hpc_dag <- hpc(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL, alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = TRUE)
+
+  plot(hc_dag_1)
+  
+  
+  bn = bn.fit(hc_dag_1, areas_treino[[1]][[1]])
+  bn
+  areas_teste[[1]][[1]]
+  areas_teste[[1]][[1]]['variavel_2'][1,1]
+  length(areas_teste[[1]][[1]]['variavel_2'][,1])
+  
+for (classe in 1 : length(class_names)){
+  cat("testando classe ",classe)
+  for(colheita in 1 : length(areas_teste[[1]][[1]]['variavel_2'][,1])){
+    cat("\n", "testando colheita ",colheita,":  \n")
+    cat("event: ",areas_teste[[1]][[1]]['variavel_1'][colheita,1], " + ", 
+        areas_teste[[1]][[1]]['variavel_2'][colheita,1], "+ ",
+        areas_teste[[1]][[1]]['variavel_3'][colheita,1], "\n")
+    cat("evidence : ", " colheita ==", classe)
+    temp = cpquery(bn, event = ((variavel_1 == areas_teste[[1]][[1]]['variavel_1'][colheita,1]) &
+                        (variavel_2 == areas_teste[[1]][[1]]['variavel_2'][colheita,1]) &
+                        (variavel_3 == areas_teste[[1]][[1]]['variavel_3'][colheita,1]) ), 
+          evidence = (colheita == classe),n=15)
+    cat("resultado", temp)
+  }
+}
+ 
+
+  
+}else  if(substr(names(areas_treino[1]),13,13) == 2){
+  print("tipo 2")
+}else  if(substr(names(areas_treino[1]),13,13) == 3){
+  print("tipo 3")
+}else  if(substr(names(areas_treino[1]),13,13) == 4){
+  print("tipo 4")
+}else  if(substr(names(areas_treino[1]),13,13) == 5){
+  print("tipo 5")
+}else  if(substr(names(areas_treino[1]),13,13) == 6){
+  print("tipo 6")
 }
 
- 
 
 for(area in 1:nAreas){
   dags[[area]] <- CriaRedes(areas[area])
 }
 
 
-
-Tdag <- pc.stable(areas[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL, alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = TRUE)
-Tdag <- gs(areas[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL, alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = TRUE)
-Tdag <- iamb(areas[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL, alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-Tdag <- hc(areas[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL, alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = TRUE)
-
 Tdag
 plot(Tdag)
-bn = bn.fit(Tdag, areas[[1]][[1]])
+bn = bn.fit(Tdag, areas_treino[[1]][[1]])
 bn
 
 
