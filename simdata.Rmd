@@ -61,25 +61,25 @@ BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
 
   # Normalizando (entre 0 e 1) dados da produção 
     # DUVIDA: é a abordagem mais correta. (??)
-       
-  temp <- array(dim = length(areasList))
-  i=1
-  for(a in 1 : length(areasList)){
-    for(h in 1 : nHarvests){
-      temp[i] <- completeSimValues[[a]][[h]][1,length(defProdVariables)+1]
-      i=1+i
-    }
-  }
-  
-  i=1
-  temp <- f_minmax(temp)
-  for(a in 1 : length(areasList)){
-    for(h in 1 : nHarvests){
-      completeSimValues[[a]][[h]][,length(defProdVariables)+1] <- temp[i]
-      i=1+i
-    }
-  }
-  
+  #      
+  # temp <- array(dim = length(areasList))
+  # i=1
+  # for(a in 1 : length(areasList)){
+  #   for(h in 1 : nHarvests){
+  #     temp[i] <- completeSimValues[[a]][[h]][1,length(defProdVariables)+1]
+  #     i=1+i
+  #   }
+  # }
+  # 
+  # i=1
+  # temp <- f_minmax(temp)
+  # for(a in 1 : length(areasList)){
+  #   for(h in 1 : nHarvests){
+  #     completeSimValues[[a]][[h]][,length(defProdVariables)+1] <- temp[i]
+  #     i=1+i
+  #   }
+  # }
+  # 
   return (completeSimValues)
   
 }
@@ -147,6 +147,7 @@ defVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
 ```{r}
 # Função para geração dos valores das variáveis e das colheitas para todas as
 # áreas informadas.
+#CHAMADA NO ESCOPO DA FUNÇÃO BuildSimulationData()
 
 # allHarvestValues = setSimVarValues(nHarvests,areasList[[a]][2],defProdVariables,nPhases)
 setSimVarValues <- function (harvests, areatype, prodvars, nPhases){
@@ -194,12 +195,12 @@ setSimVarValues <- function (harvests, areatype, prodvars, nPhases){
   }#for var in 1 : length(prodvars)
 
 # Normalizando (entre 0 e 1 ou 1- e 1, conforme o tipo de variável) 
-# dos dados das variáves antes de calcular so valores de produção  
+# dos dados das variáves antes de calcular os valores de produção  
        # DUVIDA: é a abordagem mais correta. (??)
   
 for(h in 1 : harvests){
   for(v in 1 : length(prodvars)){
-    if(max(colheitas[[h]][,v]) > 1){
+    if(max(abs(colheitas[[h]][,v])) > 1){
       colheitas[[h]][,v] = f_minmax(colheitas[[h]][,v])
     }
   }
@@ -432,14 +433,14 @@ f_minmax <- function(x){
 # função para dividir df em classes proporcional à amplitude de valores 
 
 def_classes <- function(n_classes, df_nome){
-	val_max <- max(df_nome, na.rm = TRUE)
-	val_min <- min(df_nome, na.rm = TRUE)
+  val_max <- max(df_nome, na.rm = TRUE)
+  val_min <- min(df_nome, na.rm = TRUE)
 	amp_total <- val_max - val_min
 	amp_classe <- amp_total / n_classes
 	classes <- vector()
 	classes <- val_min + amp_classe
 	for (i in 1:(n_classes -1)) { 
-		classes[i+1] <- classes[i] + amp_classe; classes
+		classes[i+1] <- classes[i] + amp_classe
 	}
 	nome <- deparse(substitute(df_nome))
 	message(nome, " - Classes")	
@@ -455,12 +456,18 @@ def_classes <- function(n_classes, df_nome){
 
 # substitui valores pelo nome da classe a qual o valor pertence 
 classficator <- function(input, varclass, names_class) {
-        input <- replace(input, input <= varclass[1], names_class[1])
-    for (i in 2 : length(varclass)){
-        input <- replace(input, input > varclass[i-1] &
-            input <= varclass[i], names_class[i])
-    }
-    return(input)
+  temp = list()
+  
+  temp[[1]] <- (input <= varclass[1])
+  for(i in 2 : length(varclass)){
+    temp[[i]] <- (input <= varclass[i] & input > varclass[i-1])
+  }
+  
+  for(i in 1 : length(varclass)){
+    input <- replace(input, temp[[i]], names_class[i])
+  }
+  
+  return(input)
 }
 ```
 
@@ -486,7 +493,7 @@ CriaRedes <- function(area_fases){
   
   for(fase in 1:length(area_fases[[1]])){
     for(var in 1:dim(area_fases[[1]][[fase]])[2]){
-      class <- def_classes(4,area_fases[[1]][[fase]][var])
+      class <- def_classes(length(class_names),area_fases[[1]][[fase]][var])
       area_fases[[1]][[fase]][var] <- classficator(area_fases[[1]][[fase]][var], class, class_names)
     }
   }
@@ -499,63 +506,18 @@ CriaRedes <- function(area_fases){
     dagsf[[fase]] <- hc(df_treino)
   }
     print(dagsf)
-  return(dagsf)
-}
-```
-
-#### testes
-
-```{r TESTE}
-file_path = "/home/gui/TCC/R/meu_pacote/teste1.csv"
-nHarvests = 15
-nphases = 5
-nAreas = 2
-nVars = 3
-dags <- list()  
-# listas para armazenar os dados por área
-areas_treino  <- list()
-areas_teste   <- list()  
-#BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...)
-# debug(BuildSimulationData)
-treino  <- BuildSimulationData(nHarvests, nphases)
-teste   <- BuildSimulationData(nHarvests, nphases)
-
-for(area in 1:length(teste)){
-  areas_treino[area] <- criaDataFrames(treino[area])
-  areas_teste[area] <- criaDataFrames(teste[area])
-  
-}
-names(areas_treino) <- names(treino)
-names(areas_teste) <- names(teste)
-areas_teste[3]
-areas_treino[3]
-substr(names(areas_teste[2]),13,13)
-
-class_names <- c(1, 2, 3, 4)
-  
-for(fase in 1:length(areas_teste[[1]])){
-  for(var in 1:dim(areas_teste[[1]][[fase]])[2]){
-    class <- def_classes(4,areas_teste[[1]][[fase]][var])
-    areas_teste[[1]][[fase]][var] <- classficator(areas_teste[[1]][[fase]][var], class, class_names)
-    }
-  } 
-  
-for(fase in 1:length(areas_treino[[1]])){
-  for(var in 1:dim(areas_treino[[1]][[fase]])[2]){
-    class <- def_classes(4,areas_treino[[1]][[fase]][var])
-    areas_treino[[1]][[fase]][var] <- classficator(areas_treino[[1]][[fase]][var], class, class_names)
-  }
-} 
-
+    return(dagsf)
+    
+## nova proposta:
+    
 # identificando o tipo de área gerada pra criar a rede correspondente
 if(substr(names(areas_teste[2]),13,13) == 1){
-  #area tipo 1: 
-  # o peso de produção varia linearmente com os valores de todas as variáveis
-  # nas duas primeiras fases fenológicas
-  #Prod = (X11 + X12 + X21 + X22 + X31 + X32)
+  print("tipo 2")
+    #area tipo 1: 
+    # o peso de produção varia linearmente com os valores de todas as variáveis
+    # nas duas primeiras fases fenológicas
+    #Prod = (X11 + X12 + X21 + X22 + X31 + X32)
 
-
-  
 whitelist = data.frame(from = c("variavel_1", "variavel_2", "variavel_3"), to = c("colheita", "colheita", "colheita"))
 
 blacklist = data.frame(from = c("variavel_1","variavel_1",
@@ -567,146 +529,304 @@ blacklist = data.frame(from = c("variavel_1","variavel_1",
                               "variavel_1", "variavel_2", #from v3
                               "variavel_1", "variavel_2", "variavel_3" #from col
                               ))
-whitelist
-blacklist
-areas_treino[[1]][[1]]
-
-
 #Criando DAG manualmente
   manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
   arc_set = as.matrix(whitelist)
   arcs(manual_dag) = arc_set
   plot(manual_dag)
 
-#Criando DAG pelos métodos do pacote
+  hc_dag_2 <-hc(areas_teste[[1]][[1]])
   
-  pc.stable_dag_1 <- pc.stable(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL, 
-                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  bn1 = bn.fit(manual_dag, areas_teste[[1]][[1]])
+  bn2 = bn.fit(hc_dag_2, areas_teste[[1]][[1]])
   
-  pc.stable_dag_2 <- pc.stable(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL, 
-                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  # validaRede()
+   
   
-  gs_dag_1 <- gs(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL,
-     alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  
-  gs_dag_2 <- gs(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL,
-     alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  
-  iamb_dag_1 <- iamb(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL,
-             alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  
-  iamb_dag_2 <- iamb(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL,
-             alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  
-  fast.iamb_dag_1 <- fast.iamb(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL,
-                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  
-  fast.iamb_dag_2 <- fast.iamb(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL,
-                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  
-  inter.iamb_dag_1 <- inter.iamb(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL,
-                   alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  
-  inter.iamb_dag_2 <- inter.iamb(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL,
-                   alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  
-  iamb.fdr_dag_1 <- iamb.fdr(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL,
-                 alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  
-  iamb.fdr_dag_2 <- iamb.fdr(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL,
-                 alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  
-  mmpc_dag_1 <- mmpc(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL,
-             alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  
-  mmpc_dag_2 <- mmpc(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL,
-             alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  
-  si.hiton.pc_dag_1 <- si.hiton.pc(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL,
-                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  
-  si.hiton.pc_dag_2 <- si.hiton.pc(areas_treino[[1]][[1]], whitelist = NULL, blacklist = NULL, test = NULL,
-                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  hc_dag_1 <-hc(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, debug = FALSE)
-  hc_dag_2 <-hc(areas_treino[[1]][[1]])
-  
-  #hpc_dag <- hpc(areas_treino[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL, alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = TRUE)
-
-  plot(hc_dag_1)
-  
-  
-  bn = bn.fit(hc_dag_1, areas_treino[[1]][[1]])
-  bn
-  areas_teste[[1]][[1]]
-  areas_teste[[1]][[1]]['variavel_2'][1,1]
-  length(areas_teste[[1]][[1]]['variavel_2'][,1])
-  
-for (classe in 1 : length(class_names)){
-  cat("testando classe ",classe)
-  for(colheita in 1 : length(areas_teste[[1]][[1]]['variavel_2'][,1])){
-    cat("\n", "testando colheita ",colheita,":  \n")
-    cat("event: ",areas_teste[[1]][[1]]['variavel_1'][colheita,1], " + ", 
-        areas_teste[[1]][[1]]['variavel_2'][colheita,1], "+ ",
-        areas_teste[[1]][[1]]['variavel_3'][colheita,1], "\n")
-    cat("evidence : ", " colheita ==", classe)
-    temp = cpquery(bn, event = ((variavel_1 == areas_teste[[1]][[1]]['variavel_1'][colheita,1]) &
-                        (variavel_2 == areas_teste[[1]][[1]]['variavel_2'][colheita,1]) &
-                        (variavel_3 == areas_teste[[1]][[1]]['variavel_3'][colheita,1]) ), 
-          evidence = (colheita == classe),n=15)
-    cat("resultado", temp)
-  }
-}
- 
-
   
 }else  if(substr(names(areas_treino[1]),13,13) == 2){
   print("tipo 2")
+  
+  whitelist = data.frame(from = c("variavel_1"), to = c("colheita"))
+
+  blacklist = data.frame(from = c("variavel_1","variavel_1", 
+                                "variavel_2", "variavel_2",
+                                "variavel_3", "variavel_3",
+                                "colheita",  "colheita",  "colheita" ), 
+                       to = c("variavel_2", "variavel_3", #from v1 
+                              "variavel_1", "variavel_3", #from v2
+                              "variavel_1", "variavel_2", #from v3
+                              "variavel_1", "variavel_2", "variavel_3" #from col
+                              ))
+   manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
+  arc_set = as.matrix(whitelist)
+  arcs(manual_dag) = arc_set
+  plot(manual_dag)
+
+  hc_dag_2 <-hc(areas_teste[[1]][[1]])
+  
+  bn1 = bn.fit(manual_dag, areas_teste[[1]][[1]])
+  bn2 = bn.fit(hc_dag_2, areas_teste[[1]][[1]])
+  
+  # validaRede()
+   
 }else  if(substr(names(areas_treino[1]),13,13) == 3){
   print("tipo 3")
+    
+  whitelist = data.frame(from = c("variavel_3"), to = c("colheita"))
+
+  blacklist = data.frame(from = c("variavel_1","variavel_1", 
+                                "variavel_2", "variavel_2",
+                                "variavel_3", "variavel_3",
+                                "colheita",  "colheita",  "colheita" ), 
+                       to = c("variavel_2", "variavel_3", #from v1 
+                              "variavel_1", "variavel_3", #from v2
+                              "variavel_1", "variavel_2", #from v3
+                              "variavel_1", "variavel_2", "variavel_3" #from col
+                              ))
+  
+  manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
+  arc_set = as.matrix(whitelist)
+  arcs(manual_dag) = arc_set
+  plot(manual_dag)
+
+  hc_dag_2 <-hc(areas_teste[[1]][[1]])
+  
+  bn1 = bn.fit(manual_dag, areas_teste[[1]][[1]])
+  bn2 = bn.fit(hc_dag_2, areas_teste[[1]][[1]])
+  
+  # validaRede()
+   
 }else  if(substr(names(areas_treino[1]),13,13) == 4){
   print("tipo 4")
+  
+  whitelist = data.frame(from = c("variavel_1", "variavel_3"),
+                         to = c("colheita", "colheita"))
+
+  blacklist = data.frame(from = c("variavel_1","variavel_1",
+                                "variavel_2", "variavel_2",
+                                "variavel_3", "variavel_3",
+                                "colheita",  "colheita",  "colheita" ), 
+                       to = c("variavel_2", "variavel_3", #from v1 
+                              "variavel_1", "variavel_3", #from v2
+                              "variavel_1", "variavel_2", #from v3
+                              "variavel_1", "variavel_2", "variavel_3" #from col
+                              ))
+   manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
+  arc_set = as.matrix(whitelist)
+  arcs(manual_dag) = arc_set
+  plot(manual_dag)
+
+  hc_dag_2 <-hc(areas_teste[[1]][[1]])
+  
+  bn1 = bn.fit(manual_dag, areas_teste[[1]][[1]])
+  bn2 = bn.fit(hc_dag_2, areas_teste[[1]][[1]])
+  
+  # validaRede()
+   
 }else  if(substr(names(areas_treino[1]),13,13) == 5){
   print("tipo 5")
+  
+  whitelist = data.frame(from = c("variavel_2"), 
+                         to = c("colheita"))
+  
+  blacklist = data.frame(from = c("variavel_1","variavel_1",
+                                "variavel_2", "variavel_2",
+                                "variavel_3", "variavel_3",
+                                "colheita",  "colheita",  "colheita" ), 
+                       to = c("variavel_2", "variavel_3", #from v1 
+                              "variavel_1", "variavel_3", #from v2
+                              "variavel_1", "variavel_2", #from v3
+                              "variavel_1", "variavel_2", "variavel_3" #from col
+                              ))
+  manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
+  arc_set = as.matrix(whitelist)
+  arcs(manual_dag) = arc_set
+  plot(manual_dag)
+
+  hc_dag_2 <-hc(areas_teste[[1]][[1]])
+  
+  bn1 = bn.fit(manual_dag, areas_teste[[1]][[1]])
+  bn2 = bn.fit(hc_dag_2, areas_teste[[1]][[1]])
+  
+  # validaRede()
+   
 }else  if(substr(names(areas_treino[1]),13,13) == 6){
   print("tipo 6")
+  whitelist = data.frame(from = c("variavel_1"),
+                         to = c("colheita"))
+
+  blacklist = data.frame(from = c("variavel_1","variavel_1",
+                                "variavel_2", "variavel_2",
+                                "variavel_3", "variavel_3",
+                                "colheita",  "colheita",  "colheita" ), 
+                       to = c("variavel_2", "variavel_3", #from v1 
+                              "variavel_1", "variavel_3", #from v2
+                              "variavel_1", "variavel_2", #from v3
+                              "variavel_1", "variavel_2", "variavel_3" #from col
+                              ))
+   manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
+  arc_set = as.matrix(whitelist)
+  arcs(manual_dag) = arc_set
+  plot(manual_dag)
+
+  hc_dag_2 <-hc(areas_teste[[1]][[1]])
+  
+  bn1 = bn.fit(manual_dag, areas_teste[[1]][[1]])
+  bn2 = bn.fit(hc_dag_2, areas_teste[[1]][[1]])
+  
+  # validaRede()
+   
 }
 
-
-for(area in 1:nAreas){
-  dags[[area]] <- CriaRedes(areas[area])
-}
-
-
-Tdag
-plot(Tdag)
-bn = bn.fit(Tdag, areas_treino[[1]][[1]])
-bn
-
-
-#Area_1_type_5
-  #Área 5: o peso da produção decresce com uma ponderação dos valores de X2:
-#Area_2_type_6
-  #Área 6: o peso da produção cresce com uma ponderação dos valores de X1:
-
-plot(dags[[2]][[5]])
-
-dag <- tabu(df_treino)
 
 #AINDA NÃO SEI COMO GERAR AS REDES DE FORMA AUTOMÁTICA SATISFATORIAMENTE, 
 # PORÉM, DEPOIS DE GERADAS VOU PRECISAR USAR ELA DE MODO AUTOMÁTICO TBM
 # E PRA ISSO EU NÃO FAÇO A MENOR INDEIA DE COMO FAZER
+}
+
+```
+
+#### testes
+
+```{r}
+iniciaTeste <- function(){
+  file_path = "/home/gui/TCC/R/meu_pacote/teste1.csv"
+  nHarvests = 15
+  nphases = 5
+  nAreas = 2
+  nVars = 3
+  class_names <- c("B", "MB", "M", "MA", "A")
+# listas para armazenar os dados por área
+  areas_list  = list()
+#BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...)
+# debug(BuildSimulationData)
+  areas_list  = BuildSimulationData(nHarvests, nphases)
+  
+  for(area in 1:length(areas_list)){
+    areas_list[area] = criaDataFrames(areas_list[area])
+  }
+  
+  names(areas_list) <- names(areas_list)
+  
+  for(area in  1:length(areas_list)){
+    for(fase in 1:length(areas_list[[1]])){
+      for(var in 1:dim(areas_list[[1]][[fase]])[2]){
+        class = def_classes(length(class_names), areas_list[[area]][[fase]][var])
+        areas_list[[area]][[fase]][var] = classficator(areas_list[[area]][[fase]][var], class, class_names)
+        areas_list[[area]][[fase]][,var] = factor(areas_list[[area]][[fase]][,var], class_names)
+      }
+    }
+  }
+  
+  return(areas_list)
+}
+```
+
+```{r}
+validaRede <- function(areas_teste, bn){
+  
+  #função para testar a capacidade de inferência da REDE
+  #por enquanto apenas printa os testes
+  #preciso aplicar métodos de verdade de validação tipo matriz de confusão etc
+  #tentei e não consegui especificar o DF como parâmetro mas não consigo
+  
+  for(colheita in 1 : length(areas_teste[[1]][[1]][,1])){
+    cat("colheita", colheita, ":\n") 
+    for (class in 1: length(class_names)){ 
+      temp = class_names[class] 
+      cat("Classe:", temp, ":") 
+      print(cpquery(bn, 
+                  event = (colheita ==temp),
+                  evidence = ((variavel_1 == areas_teste[[6]][[5]]['variavel_1'][colheita,1]) &
+                                (variavel_2 == areas_teste[[6]][[5]]['variavel_2'][colheita,1]) & 
+                                (variavel_3 == areas_teste[[6]][[5]]['variavel_3'][colheita,1])))) 
+  }
+}
+  }
+```
+
+```{r TESTE} 
+
+#areas_treino <- iniciaTeste() 
+areas_teste <- iniciaTeste()
+summary(areas_teste[[5]][[1]])
+areas_teste[[2]][[1]]
+#summary(areas_teste[[5]][[1]])
+
+# PROXIMA TAREFA É CORRIGIR A FUNÇÃO 'CriaRedes'
+  #for(area in 1:nAreas){ 
+   # dags[[area]] <- CriaRedes(areas[area]) 
+  #}
 
 
 
-#teste da função de inferência:
-bn = bn.fit(dag, df_teste)
-cpquery(bn, event = ((variavel_1 == df_teste['variavel_1']) & (variavel_2 == df_teste['variavel_2']) & (variavel_3 == df_teste['variavel_3']) ), evidence = (colheita == 1), n=1)
-cpquery(bn, event = ((variavel_1 == df_teste['variavel_1']) & (variavel_2 == df_teste['variavel_2']) & (variavel_3 == df_teste['variavel_3']) ), evidence = (colheita == 2), n=1)
-cpquery(bn, event = ((variavel_1 == df_teste['variavel_1']) & (variavel_2 == df_teste['variavel_2']) & (variavel_3 == df_teste['variavel_3']) ), evidence = (colheita == 3), n=1)
-cpquery(bn, event = ((variavel_1 == df_teste['variavel_1']) & (variavel_2 == df_teste['variavel_2']) & (variavel_3 == df_teste['variavel_3']) ), evidence = (colheita == 4), n=1)
+
+# RASCUNHO:
+
+whitelist = data.frame(from = c("variavel_1", "variavel_2", "variavel_3"), to = c("colheita", "colheita", "colheita"))
+whitelistA6 = data.frame(from = c("variavel_1"), to = c("colheita"))
+
+blacklist = data.frame(from = c("variavel_1","variavel_1",
+                                "variavel_2", "variavel_2",
+                                "variavel_3", "variavel_3",
+                                "colheita",  "colheita",  "colheita" ), 
+                       to = c("variavel_2", "variavel_3", #from v1 
+                              "variavel_1", "variavel_3", #from v2
+                              "variavel_1", "variavel_2", #from v3
+                              "variavel_1", "variavel_2", "variavel_3")) #from col
+ arc_set = as.matrix(whitelist)
+  ####  manual_dag ####
+
+  manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
+  arc_set = as.matrix(whitelist)
+  arcs(manual_dag) = arc_set
+  plot(manual_dag)
+  bn_manual_dag = bn.fit(manual_dag, areas_teste[[1]][[1]])
+  validaRede(areas_teste, bn_manual_dag)
+  score(manual_dag, areas_teste[[1]][[1]], by.node = FALSE, debug = FALSE)
+  
+  #### Hill climbing ###
+  areas_teste <- iniciaTeste()
+  #hc_dag <-hc(areas_teste[[1]][[1]], manual_dag)
+  hc_dag <-hc(areas_teste[[6]][[4]], debug = FALSE, whitelist = whitelistA6, blacklist = blacklist)
+  #blacklist(hc_dag)
+  plot(hc_dag) 
+  bn_hc_dag = bn.fit(hc_dag, areas_teste[[6]][[5]])
+  bn_hc_dag[[4]]
+validaRede(areas_teste, bn_hc_dag)
+  score(hc_dag, areas_teste[[6]][[5]], by.node = FALSE, debug = FALSE)
+  
+  
+  #### Tabu ####
+  
+  tabu_dag <-tabu(areas_teste[[1]][[1]], tabu = 10, debug = TRUE)
+  plot(tabu_dag) 
+  bn_tabu_dag = bn.fit(tabu_dag, areas_teste[[1]][[1]])
+  bn_tabu_dag[[4]]
+  validaRede(areas_teste, bn_tabu_dag)
+  score(tabu_dag, areas_teste[[1]][[1]], by.node = FALSE, debug = FALSE)
+  
+  mmhc_dag_1 <- mmhc(areas_teste[[1]][[5]], whitelist = whitelist, blacklist = blacklist, debug = FALSE)
+  #mmhc_dag_1 <- mmhc(areas_teste[[1]][[1]], whitelist = whitelist, blacklist = blacklist, debug = FALSE)
+  plot(mmhc_dag_1)
+  bn_mmhc = bn.fit(mmhc_dag_1, areas_teste[[1]][[1]])
+  bn_mmhc[[4]] 
+  validaRede(areas_teste, bn_mmhc)
+  score(mmhc_dag_1, areas_teste[[1]][[1]], by.node = FALSE, debug = FALSE)
+  
+  
+  pc.stable_dag_1 <- pc.stable(areas_teste[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL, 
+                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  plot(pc.stable_dag_1)
+  bn_pc.stable_dag_1 = bn.fit(pc.stable_dag_1, areas_teste[[1]][[1]])
+  bn_pc.stable_dag_1[[4]] 
+  validaRede(areas_teste, bn_pc.stable_dag_1)
 
 
-## As predição vão ter que ser armazenadas numa série 
-    ## pra tentar imputar na rede dinâmica.
+bn = bn.fit(pc.stable_dag_1, areas_teste[[1]][[1]]) 
+bn 
+
+
 
 ```
