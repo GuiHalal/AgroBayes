@@ -13,6 +13,7 @@ output:
 library(bnlearn)
 library(Hmisc)
 library(dbnlearn)
+library(rbmn)
 ```
 
 #### 
@@ -50,10 +51,13 @@ BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
   completeSimValues = list()
   namesArea = array(dim = length(areasList))
   
+# Para cada área Calcula os valores das variáveis
+# e da producao pela função setSimVarValues
+  
   for (a in 1:length(areasList)) {
-    # Calcula os valores das variáveis e da producao pela função setSimVarValues
     
     #cat("Calculando valores da área ",a,"\n")
+
     completeSimValues[[a]] = setSimVarValues(nHarvests, areasList[[a]][2],defProdVariables,nPhases)
     namesArea[a] = paste("Area", a, "type", areasList[[a]][2], sep = "_")
   }
@@ -145,35 +149,41 @@ defVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
 #### setSimVarValues
 
 ```{r}
-# Função para geração dos valores das variáveis e das colheitas para todas as
-# áreas informadas.
+# Função para geração dos valores das variáveis e das colheitas para cada
+# área informada.
 #CHAMADA NO ESCOPO DA FUNÇÃO BuildSimulationData()
+#A função é chamada uma vez por área
 
-# allHarvestValues = setSimVarValues(nHarvests,areasList[[a]][2],defProdVariables,nPhases)
 setSimVarValues <- function (harvests, areatype, prodvars, nPhases){
   colheitas <-list()
   names_colheitas <- array(dim = harvests)
   
   # define os nomes das variáveis 
   for(i in 1: harvests){
+  # pra cada colheita da área
+    # cria uma matriz de 'numero de fases' linhas e
+    # 'numero de variáveis' colunas 
+    # (sendo a v pridução nvariaveis independente +1)
+    # aqui eu usei matrizes pq é mais fácil fazer operações matemáticas 
+    # nas matrizes
     fases <- matrix(nrow=nPhases, ncol= length(prodvars)+1)
     colnames(fases) <-  colnames(fases, do.NULL = FALSE, prefix = "variavel_")
     colnames(fases)[length(prodvars)+1] <-  "colheita"
     rownames(fases) <-  rownames(fases, do.NULL = FALSE, prefix = "fase_")
     colheitas[[i]] = fases
-     names_colheitas[i] = paste("colheita", i, sep = "_")
+    names_colheitas[i] = paste("colheita", i, sep = "_")
   }
   names(colheitas) = names_colheitas
   
-  # gera os valores das variáveis
-  for (var in 1 : length(prodvars)){
-    for (harv in 1:harvests) {
+  # gera os valores das variáveis independentes
+  for (var in 1 : length(prodvars)){# pra cada vaiável 
+    for (harv in 1:harvests) {# pra cada colheita
       random_value   = runif(1, 
                              min=as.numeric(prodvars[[var]][2]),
                              max=as.numeric(prodvars[[var]][3]))
       last_value_var = 0
       const_value    = random_value
-      for (pha in 1:nPhases){
+      for (pha in 1:nPhases){ #pra cada fase
         # type (up=1,osc=2,const=3)
         if (prodvars[[var]][4]==1){
           v_value = random_value + last_value_var
@@ -219,6 +229,13 @@ if(length(prodvars)==3){
   if (areatype == 1) {
     
     for (h in 1: harvests){
+      # cada colheita recebe o somatório de cada linha (fase) 
+      # length(prodvars) é a quantidade de variáveis independentes
+      # lembrando que 'colheitas' é uma lista de matrizes, daí
+      # colheitas[[h]][,1:length(prodvars)] é:
+        # colheitas[[h]] a matriz da colheita h
+        # [,1:length(prodvars)] pra todas as linas da coluna 1 até a penultima
+        # a última -- [,length(prodvars)+1] -- é onde fica a var 'colheita'
       colheitas[[h]][,length(prodvars)+1] = sum(colheitas[[h]][,1:length(prodvars)])
     }
   }
@@ -267,14 +284,14 @@ if(length(prodvars)==3){
   
   # Área 6: o peso da produção cresce com uma ponderação dos valores de X1:
   # Prod = 0,2*X11 + 0,4* X12 + 0,6*X13 + 0,8*X14 + 1*X15
-  else if (areatype == 6) {
+  else if (areatype == 6){
     for(h in 1:harvests) {
-       producaoPhase = 0
+      producaoPhase = 0
       chunk = 100/nPhases
       for(p in 1:nPhases){
         temp = ((colheitas[[h]][p,1])*(chunk*p))/100
-         producaoPhase =  producaoPhase + temp
-      }
+        producaoPhase =  producaoPhase + temp
+        }
       colheitas[[h]][,length(prodvars)+1] =  producaoPhase
     }
   }
@@ -394,22 +411,21 @@ if(length(prodvars)==3){
 # cria os dataframes apartir das listas com os dados gerados nas funções abaixo
 
 criaDataFrames <- function (dados){
-fase <- list()
-area <- list()
-
-for(k in 1:length(dados)){
-for(j in 1:length(dados[[1]][[1]][,1])){
-  area_phase <- matrix(0, nrow=length(dados[[1]]),ncol=length(dados[[1]][[1]][1,]))
-for(i in 1:length(dados[[1]])) {
-area_phase[i,] <- dados[[1]][[i]][j,]
-}
-  fase[[j]] <- data.frame(area_phase)
-  colnames(fase[[j]]) <- colnames(dados[[1]][[1]])
-  rownames(fase[[j]]) <- rownames(fase[[j]])
-}
-  area[[k]] <- fase
-}
-return(area)
+  fase <- list()
+  area <- list()
+  for(k in 1:length(dados)){
+    for(j in 1:length(dados[[1]][[1]][,1])){
+      area_phase <- matrix(0, nrow=length(dados[[1]]),ncol=length(dados[[1]][[1]][1,]))
+      for(i in 1:length(dados[[1]])){
+        area_phase[i,] <- dados[[1]][[i]][j,]
+      }
+      fase[[j]] <- data.frame(area_phase)
+      colnames(fase[[j]]) <- colnames(dados[[1]][[1]])
+      rownames(fase[[j]]) <- rownames(fase[[j]])
+      }
+    area[[k]] <- fase
+    }
+  return(area)
 }
 ```
 
@@ -675,7 +691,7 @@ blacklist = data.frame(from = c("variavel_1","variavel_1",
   bn1 = bn.fit(manual_dag, areas_teste[[1]][[1]])
   bn2 = bn.fit(hc_dag_2, areas_teste[[1]][[1]])
   
-  # validaRede()
+   #validaRede()
    
 }
 
@@ -699,25 +715,33 @@ iniciaTeste <- function(){
   class_names <- c("B", "MB", "M", "MA", "A")
 # listas para armazenar os dados por área
   areas_list  = list()
-#BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...)
-# debug(BuildSimulationData)
   areas_list  = BuildSimulationData(nHarvests, nphases)
-  
+
+#para cada área, cria uma lista de dataframes
+#cada dataframe tem os dados de uma fase fenológica
   for(area in 1:length(areas_list)){
     areas_list[area] = criaDataFrames(areas_list[area])
   }
   
-  names(areas_list) <- names(areas_list)
+    #TENTATIVA de discretizar as variáveis com a função discretize do pacote, 
+    # mas dá erro quando uma variável não varia ao longo das colheitas... 
   
-  for(area in  1:length(areas_list)){
-    for(fase in 1:length(areas_list[[1]])){
-      for(var in 1:dim(areas_list[[1]][[fase]])[2]){
-        class = def_classes(length(class_names), areas_list[[area]][[fase]][var])
-        areas_list[[area]][[fase]][var] = classficator(areas_list[[area]][[fase]][var], class, class_names)
-        areas_list[[area]][[fase]][,var] = factor(areas_list[[area]][[fase]][,var], class_names)
-      }
-    }
-  }
+   # for(area in  1:length(areas_list)){#para cada área
+   #   for(fase in 1:length(areas_list[[1]])){#para cada fase da área
+   #     areas_list[[area]][[fase]] <- discretize(areas_list[[area]][[fase]], breaks = 5)
+   #     for(var in 1:dim(areas_list[[1]][[fase]])[2]){#para cada variável da área/fase
+   #       levels(areas_list[[area]][[fase]][,var]) <- class_names
+   #     }
+   #   }
+   # }  
+        # Versão anterior com as funções criadas pra discretizar as variáveis...
+        #mas daí descobri que tem uma função no pacote bnlear que faz isso
+        #        class = def_classes(length(class_names), areas_list[[area]][[fase]][var])
+        #       areas_list[[area]][[fase]][var] = classficator(areas_list[[area]][[fase]][var], class, class_names)
+        #       areas_list[[area]][[fase]][,var] = factor(areas_list[[area]][[fase]][,var], class_names)
+        #     }
+        #   }
+        # }
   
   return(areas_list)
 }
@@ -748,26 +772,68 @@ validaRede <- function(areas_teste, bn){
 
 ```{r TESTE} 
 
-#areas_treino <- iniciaTeste() 
+areas_treino <- iniciaTeste() 
+areas_treino
+areas_treino[[1]][5]
 areas_teste <- iniciaTeste()
-summary(areas_teste[[5]][[1]])
-areas_teste[[2]][[1]]
-#summary(areas_teste[[5]][[1]])
 
-# PROXIMA TAREFA É CORRIGIR A FUNÇÃO 'CriaRedes'
-  #for(area in 1:nAreas){ 
-   # dags[[area]] <- CriaRedes(areas[area]) 
-  #}
 
 
 
 
 # RASCUNHO:
+# DAQUI pra baixo sõa testes das funções do pacote.
+summary(areas_teste[[1]][[1]])
 
-whitelist = data.frame(from = c("variavel_1", "variavel_2", "variavel_3"), to = c("colheita", "colheita", "colheita"))
-whitelistA6 = data.frame(from = c("variavel_1"), to = c("colheita"))
+# A função de discretização não funciona pra todas as áreas+fases por conta do
+# problema que falei ali em cima, mas alí pela 2 fase em diante já funciona, 
+# daí da pra usar ela aqui fora da função de inicialização dos dados.
+  
+class_names <- c("B", "MB", "M", "MA", "A")
+areas_treino_disc <-  discretize(areas_treino[[1]][[4]], breaks = 5)
+summary(areas_treino_disc)
 
-blacklist = data.frame(from = c("variavel_1","variavel_1",
+# daí trocar os nomes pros nomes que definimos
+for(var in 1: dim(areas_treino[[1]][[1]])[2]){
+  levels(areas_treino_disc[,var]) <- class_names
+}
+areas_treino_disc
+levels(areas_treino_disc[,1])
+summary(areas_treino_disc)
+
+## Aqui preparo os dados pra gerar as redes e depois fazer inferência
+## esse trecho DEVERIA estar na função iniciaTeste()
+areas_treino_disc <- discretize(areas_treino[[1]][[4]], breaks = 5)
+areas_teste_disc <- discretize(areas_teste[[1]][[4]], breaks = 5)
+
+levels(areas_treino_disc$variavel_1) <- (c("B", "MB", "M", "MA", "A"))
+levels(areas_treino_disc$variavel_2) <- (c("B", "MB", "M", "MA", "A"))
+levels(areas_treino_disc$variavel_3) <- (c("B", "MB", "M", "MA", "A"))
+levels(areas_treino_disc$colheita) <- (c("B", "MB", "M", "MA", "A"))
+
+levels(areas_teste_disc$variavel_1) <- (c("B", "MB", "M", "MA", "A"))
+levels(areas_teste_disc$variavel_2) <- (c("B", "MB", "M", "MA", "A"))
+levels(areas_teste_disc$variavel_3) <- (c("B", "MB", "M", "MA", "A"))
+levels(areas_teste_disc$colheita) <- (c("B", "MB", "M", "MA", "A"))
+
+
+# aqui abaixo eu testo alguns algorítomos de aprendizado de estrutura de 
+# redes bayesianas, mas não evoluiu muito por conta dos problemas 
+# que te reportei mais acima
+
+## esse trecho abaixo DEVERIA ir pra função CriaRedes() a IDEIA da função
+## CriaRedes seria gerar várias redes por vários algorítmos de aprendizados de
+## estrutura e selecionar o com o melhor score 
+##  (a função score() parece promissora pra isso), mas não estudei ela o suficiente
+
+
+## DE QQ FORMA abaixo gero uma rede pelo algorírmo Hill climbing, pra área 1
+# e teste ela 
+
+#### Hill climbing ###
+
+  whitelist = data.frame(from = c("variavel_1", "variavel_2", "variavel_3"), to = c("colheita", "colheita", "colheita"))
+  blacklist = data.frame(from = c("variavel_1","variavel_1",
                                 "variavel_2", "variavel_2",
                                 "variavel_3", "variavel_3",
                                 "colheita",  "colheita",  "colheita" ), 
@@ -775,58 +841,20 @@ blacklist = data.frame(from = c("variavel_1","variavel_1",
                               "variavel_1", "variavel_3", #from v2
                               "variavel_1", "variavel_2", #from v3
                               "variavel_1", "variavel_2", "variavel_3")) #from col
- arc_set = as.matrix(whitelist)
-  ####  manual_dag ####
-
-  manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
-  arc_set = as.matrix(whitelist)
-  arcs(manual_dag) = arc_set
-  plot(manual_dag)
-  bn_manual_dag = bn.fit(manual_dag, areas_teste[[1]][[1]])
-  validaRede(areas_teste, bn_manual_dag)
-  score(manual_dag, areas_teste[[1]][[1]], by.node = FALSE, debug = FALSE)
   
-  #### Hill climbing ###
-  areas_teste <- iniciaTeste()
-  #hc_dag <-hc(areas_teste[[1]][[1]], manual_dag)
-  hc_dag <-hc(areas_teste[[6]][[4]], debug = FALSE, whitelist = whitelistA6, blacklist = blacklist)
-  #blacklist(hc_dag)
+  hc_dag <-hc(areas_treino_disc, debug = FALSE, whitelist = whitelist, blacklist = blacklist)
   plot(hc_dag) 
-  bn_hc_dag = bn.fit(hc_dag, areas_teste[[6]][[5]])
-  bn_hc_dag[[4]]
-validaRede(areas_teste, bn_hc_dag)
-  score(hc_dag, areas_teste[[6]][[5]], by.node = FALSE, debug = FALSE)
+  bn_hc_dag = bn.fit(hc_dag, areas_treino_disc)
+  #areas_teste_disc
+  #bn_hc_dag[[4]]
   
+  #Esse trecho das próximas linhas DEVERIAM estar na função 'validaRede()'
+  cpquery(bn_hc_dag, 
+                  event = (colheita == "A"),
+                  evidence = ((variavel_1 == "B") &
+                                (variavel_2 == "A") & 
+                                (variavel_3 == "A")))
   
-  #### Tabu ####
-  
-  tabu_dag <-tabu(areas_teste[[1]][[1]], tabu = 10, debug = TRUE)
-  plot(tabu_dag) 
-  bn_tabu_dag = bn.fit(tabu_dag, areas_teste[[1]][[1]])
-  bn_tabu_dag[[4]]
-  validaRede(areas_teste, bn_tabu_dag)
-  score(tabu_dag, areas_teste[[1]][[1]], by.node = FALSE, debug = FALSE)
-  
-  mmhc_dag_1 <- mmhc(areas_teste[[1]][[5]], whitelist = whitelist, blacklist = blacklist, debug = FALSE)
-  #mmhc_dag_1 <- mmhc(areas_teste[[1]][[1]], whitelist = whitelist, blacklist = blacklist, debug = FALSE)
-  plot(mmhc_dag_1)
-  bn_mmhc = bn.fit(mmhc_dag_1, areas_teste[[1]][[1]])
-  bn_mmhc[[4]] 
-  validaRede(areas_teste, bn_mmhc)
-  score(mmhc_dag_1, areas_teste[[1]][[1]], by.node = FALSE, debug = FALSE)
-  
-  
-  pc.stable_dag_1 <- pc.stable(areas_teste[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL, 
-                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
-  plot(pc.stable_dag_1)
-  bn_pc.stable_dag_1 = bn.fit(pc.stable_dag_1, areas_teste[[1]][[1]])
-  bn_pc.stable_dag_1[[4]] 
-  validaRede(areas_teste, bn_pc.stable_dag_1)
-
-
-bn = bn.fit(pc.stable_dag_1, areas_teste[[1]][[1]]) 
-bn 
-
-
+  score(hc_dag, areas_teste_disc, by.node = FALSE, debug = FALSE)
 
 ```
