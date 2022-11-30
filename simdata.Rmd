@@ -211,7 +211,20 @@ setSimVarValues <- function (harvests, areatype, prodvars, nPhases){
 for(h in 1 : harvests){
   for(v in 1 : length(prodvars)){
     if(max(abs(colheitas[[h]][,v])) > 1){
+      
+  # cat("QUEISSO: ",  colheitas[[h]], "H: ", h,"**\n")
+  # cat("1: ",  colheitas[[h]][,1], "H: ", h,  "V: 1", "**\n")
+  # cat("2: ",  colheitas[[h]][,2], "H: ", h,  "V: 2", "**\n")
+  # cat("3: ",  colheitas[[h]][,3], "H: ", h,  "V: 3", "**\n")
+  # cat("4: ",  colheitas[[h]][,4], "H: ", h,  "V: 4", "**\n")
+      
+  # cat("ANTES: ",  colheitas[[h]][,v], "H: ", h,  "V: ", v, "**\n")
       colheitas[[h]][,v] = f_minmax(colheitas[[h]][,v])
+  # cat("DEPOIS: min: ",  min(colheitas[[h]][,v]), "max: ", max(colheitas[[h]][,v]),  "H: ", h,  "V: ", v, "**\n")
+      colheitas[[h]][which.max(colheitas[[h]][,v]),v] = max(colheitas[[h]][,v]) - runif(1)/100
+      colheitas[[h]][which.min(colheitas[[h]][,v]),v] = min(colheitas[[h]][,v]) + runif(1)/100
+  # cat("DEPOISZZ: min: ",  min(colheitas[[h]][,v]), "max: ", max(colheitas[[h]][,v]),  "H: ", h,  "V: ", v, "**\n")
+  # cat("DDDEPOISZZ: ",  colheitas[[h]][,v], "H: ", h,  "V: ", v, "**\n")
     }
   }
 }
@@ -726,14 +739,14 @@ iniciaTeste <- function(){
     #TENTATIVA de discretizar as variáveis com a função discretize do pacote, 
     # mas dá erro quando uma variável não varia ao longo das colheitas... 
   
-   # for(area in  1:length(areas_list)){#para cada área
-   #   for(fase in 1:length(areas_list[[1]])){#para cada fase da área
-   #     areas_list[[area]][[fase]] <- discretize(areas_list[[area]][[fase]], breaks = 5)
-   #     for(var in 1:dim(areas_list[[1]][[fase]])[2]){#para cada variável da área/fase
-   #       levels(areas_list[[area]][[fase]][,var]) <- class_names
-   #     }
-   #   }
-   # }  
+    for(area in  1:length(areas_list)){#para cada área
+      for(fase in 1:length(areas_list[[1]])){#para cada fase da área
+        areas_list[[area]][[fase]] <- discretize(areas_list[[area]][[fase]], breaks = 5)
+        for(var in 1:dim(areas_list[[1]][[fase]])[2]){#para cada variável da área/fase
+          levels(areas_list[[area]][[fase]][,var]) <- class_names
+        }
+      }
+    }  
         # Versão anterior com as funções criadas pra discretizar as variáveis...
         #mas daí descobri que tem uma função no pacote bnlear que faz isso
         #        class = def_classes(length(class_names), areas_list[[area]][[fase]][var])
@@ -774,10 +787,10 @@ validaRede <- function(areas_teste, bn){
 
 areas_treino <- iniciaTeste() 
 areas_treino
-areas_treino[[1]][5]
+areas_treino[[6]]
 areas_teste <- iniciaTeste()
 
-
+runif(1)/100
 
 
 
@@ -843,7 +856,9 @@ levels(areas_teste_disc$colheita) <- (c("B", "MB", "M", "MA", "A"))
                               "variavel_1", "variavel_2", "variavel_3")) #from col
   
   hc_dag <-hc(areas_treino_disc, debug = FALSE, whitelist = whitelist, blacklist = blacklist)
+  modelstring(hc_dag)
   plot(hc_dag) 
+  score(hc_dag, areas_teste_disc, by.node = FALSE, debug = FALSE)
   bn_hc_dag = bn.fit(hc_dag, areas_treino_disc)
   #areas_teste_disc
   #bn_hc_dag[[4]]
@@ -855,6 +870,6 @@ levels(areas_teste_disc$colheita) <- (c("B", "MB", "M", "MA", "A"))
                                 (variavel_2 == "A") & 
                                 (variavel_3 == "A")))
   
-  score(hc_dag, areas_teste_disc, by.node = FALSE, debug = FALSE)
+  
 
 ```
