@@ -211,21 +211,14 @@ setSimVarValues <- function (harvests, areatype, prodvars, nPhases){
 for(h in 1 : harvests){
   for(v in 1 : length(prodvars)){
     if(max(abs(colheitas[[h]][,v])) > 1){
-      
-  # cat("QUEISSO: ",  colheitas[[h]], "H: ", h,"**\n")
-  # cat("1: ",  colheitas[[h]][,1], "H: ", h,  "V: 1", "**\n")
-  # cat("2: ",  colheitas[[h]][,2], "H: ", h,  "V: 2", "**\n")
-  # cat("3: ",  colheitas[[h]][,3], "H: ", h,  "V: 3", "**\n")
-  # cat("4: ",  colheitas[[h]][,4], "H: ", h,  "V: 4", "**\n")
-      
-  # cat("ANTES: ",  colheitas[[h]][,v], "H: ", h,  "V: ", v, "**\n")
       colheitas[[h]][,v] = f_minmax(colheitas[[h]][,v])
-  # cat("DEPOIS: min: ",  min(colheitas[[h]][,v]), "max: ", max(colheitas[[h]][,v]),  "H: ", h,  "V: ", v, "**\n")
+      
+      # corrige valores extremos 0 e 1, adicionando/subtraindo
+      # um valor aleatório na 3ª casa depois da vírgula
       colheitas[[h]][which.max(colheitas[[h]][,v]),v] = max(colheitas[[h]][,v]) - runif(1)/100
       colheitas[[h]][which.min(colheitas[[h]][,v]),v] = min(colheitas[[h]][,v]) + runif(1)/100
-  # cat("DEPOISZZ: min: ",  min(colheitas[[h]][,v]), "max: ", max(colheitas[[h]][,v]),  "H: ", h,  "V: ", v, "**\n")
-  # cat("DDDEPOISZZ: ",  colheitas[[h]][,v], "H: ", h,  "V: ", v, "**\n")
-    }
+ 
+     }
   }
 }
 
