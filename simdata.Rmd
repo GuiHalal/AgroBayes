@@ -9,19 +9,16 @@ output:
 
 ##### importações
 
-```{R}
+```{R imports}
 library(bnlearn)
 library(Hmisc)
 library(dbnlearn)
 library(rbmn)
-#source('bnlearn_discrete_multivar_prediction_eval.R')
+source('bnlearn_discrete_multivar_prediction_eval.R')
 ```
 
-#### 
 
-#### BuildSimulationData
-
-```{r}
+```{r BuildSimulationData}
 BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
   
   
@@ -90,11 +87,8 @@ BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
 }
 ```
 
-#### 
 
-#### defVars
-
-```{r}
+```{r defVars}
 # função para geração das variáveis
 # chamada no escopo da função BuildSimulationData
 
@@ -145,11 +139,8 @@ defVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
 
 ```
 
-#### 
 
-#### setSimVarValues
-
-```{r}
+```{r setSimVarValues}
 # Função para geração dos valores das variáveis e das colheitas para cada
 # área informada.
 #CHAMADA NO ESCOPO DA FUNÇÃO BuildSimulationData()
@@ -409,11 +400,8 @@ if(length(prodvars)==3){
 }
 ```
 
-#### 
 
-#### criaDataFrames
-
-```{r}
+```{r criaDataFrames} 
 # A entrada das funções do pacote bnlearn são dataframes, portanto esta função
 # cria os dataframes apartir das listas com os dados gerados nas funções abaixo
 
@@ -436,11 +424,8 @@ criaDataFrames <- function (dados){
 }
 ```
 
-#### 
 
-#### f_minmax
-
-```{r}
+```{r f_minmax}
 # faz a normalização dos dados
 f_minmax <- function(x){
   return((x - min(x))/(max(x)-min(x)))
@@ -448,11 +433,8 @@ f_minmax <- function(x){
 
 ```
 
-#### 
 
-#### def_classes
-
-```{r}
+```{r def_classes}
 # função para dividir df em classes proporcional à amplitude de valores 
 
 def_classes <- function(n_classes, df_nome){
@@ -471,11 +453,8 @@ def_classes <- function(n_classes, df_nome){
 }
 ```
 
-#### 
 
-#### classficator
-
-```{r}
+```{r classficator}
 
 # substitui valores pelo nome da classe a qual o valor pertence 
 classficator <- function(input, varclass, names_class) {
@@ -494,129 +473,25 @@ classficator <- function(input, varclass, names_class) {
 }
 ```
 
-#### 
 
-#### CriaRedes
-
-```{r}
+```{r CriaRedes}
 ### Cria redes pra todas as fases fenológicas da área
-CriaRedes <- function(area_fases){
+CriaRedes <- function (areaphase, areatype){
+  treino <- areaphase[1:floor(0.8*(dim(areaphase)[1])),]
+  teste <- areaphase[1:floor(0.2*(dim(areaphase)[1])),]
   
-  dagsf <- list()
-  class_names <- c(1, 2, 3, 4)
-  
-  for(fase in 1:length(area_fases[[1]])){
-    for(var in 1:dim(area_fases[[1]][[fase]])[2]){
-      class <- def_classes(length(class_names),area_fases[[1]][[fase]][var])
-      area_fases[[1]][[fase]][var] <- classficator(area_fases[[1]][[fase]][var], class, class_names)
-    }
-  }
-# até aqui beleza... a parte de baixo que eu não sei como fazer...
-  
-
-  for(fase in 1:length(area_fases[[1]])){
-    df_teste <- area_fases[[1]][[fase]][dim(area_fases[[1]][[fase]])[1],]
-    df_treino <- area_fases[[1]][[fase]][1:dim(area_fases[[1]][[fase]])[1]-1,]
-    dagsf[[fase]] <- hc(df_treino)
-  }
-    print(dagsf)
-    return(dagsf)
-    
-## nova proposta:
-    
-# identificando o tipo de área gerada pra criar a rede correspondente
-if(substr(names(areas_teste[2]),13,13) == 1){
-  print("tipo 2")
-    #area tipo 1: 
-    # o peso de produção varia linearmente com os valores de todas as variáveis
-    # nas duas primeiras fases fenológicas
-    #Prod = (X11 + X12 + X21 + X22 + X31 + X32)
-
-whitelist = data.frame(from = c("variavel_1", "variavel_2", "variavel_3"), to = c("colheita", "colheita", "colheita"))
-
-blacklist = data.frame(from = c("variavel_1","variavel_1",
-                                "variavel_2", "variavel_2",
-                                "variavel_3", "variavel_3",
-                                "colheita",  "colheita",  "colheita" ), 
-                       to = c("variavel_2", "variavel_3", #from v1 
-                              "variavel_1", "variavel_3", #from v2
-                              "variavel_1", "variavel_2", #from v3
-                              "variavel_1", "variavel_2", "variavel_3" #from col
-                              ))
-#Criando DAG manualmente
-  manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
-  arc_set = as.matrix(whitelist)
-  arcs(manual_dag) = arc_set
-  plot(manual_dag)
-
-  hc_dag_2 <-hc(areas_teste[[1]][[1]])
-  
-  bn1 = bn.fit(manual_dag, areas_teste[[1]][[1]])
-  bn2 = bn.fit(hc_dag_2, areas_teste[[1]][[1]])
-  
-  # validaRede()
-   
-  
-  
-}else  if(substr(names(areas_treino[1]),13,13) == 2){
-  print("tipo 2")
-  
-  whitelist = data.frame(from = c("variavel_1"), to = c("colheita"))
-
-  blacklist = data.frame(from = c("variavel_1","variavel_1", 
-                                "variavel_2", "variavel_2",
-                                "variavel_3", "variavel_3",
-                                "colheita",  "colheita",  "colheita" ), 
-                       to = c("variavel_2", "variavel_3", #from v1 
-                              "variavel_1", "variavel_3", #from v2
-                              "variavel_1", "variavel_2", #from v3
-                              "variavel_1", "variavel_2", "variavel_3" #from col
-                              ))
-   manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
-  arc_set = as.matrix(whitelist)
-  arcs(manual_dag) = arc_set
-  plot(manual_dag)
-
-  hc_dag_2 <-hc(areas_teste[[1]][[1]])
-  
-  bn1 = bn.fit(manual_dag, areas_teste[[1]][[1]])
-  bn2 = bn.fit(hc_dag_2, areas_teste[[1]][[1]])
-  
-  # validaRede()
-   
-}else  if(substr(names(areas_treino[1]),13,13) == 3){
-  print("tipo 3")
-    
-  whitelist = data.frame(from = c("variavel_3"), to = c("colheita"))
-
-  blacklist = data.frame(from = c("variavel_1","variavel_1", 
-                                "variavel_2", "variavel_2",
-                                "variavel_3", "variavel_3",
-                                "colheita",  "colheita",  "colheita" ), 
-                       to = c("variavel_2", "variavel_3", #from v1 
-                              "variavel_1", "variavel_3", #from v2
-                              "variavel_1", "variavel_2", #from v3
-                              "variavel_1", "variavel_2", "variavel_3" #from col
-                              ))
-  
-  manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
-  arc_set = as.matrix(whitelist)
-  arcs(manual_dag) = arc_set
-  plot(manual_dag)
-
-  hc_dag_2 <-hc(areas_teste[[1]][[1]])
-  
-  bn1 = bn.fit(manual_dag, areas_teste[[1]][[1]])
-  bn2 = bn.fit(hc_dag_2, areas_teste[[1]][[1]])
-  
-  # validaRede()
-   
-}else  if(substr(names(areas_treino[1]),13,13) == 4){
-  print("tipo 4")
-  
-  whitelist = data.frame(from = c("variavel_1", "variavel_3"),
-                         to = c("colheita", "colheita"))
-
+  whitelist_A1 = data.frame(from = c("variavel_1", "variavel_2", "variavel_3"), 
+                            to = c("colheita", "colheita", "colheita"))
+  whitelist_A2 = data.frame(from = c("variavel_1"), 
+                            to = c("colheita"))
+  whitelist_A3 = data.frame(from = c("variavel_3"), 
+                            to = c("colheita"))
+  whitelist_A4 = data.frame(from = c("variavel_1", "variavel_3"), 
+                            to = c("colheita", "colheita"))
+  whitelist_A5 = data.frame(from = c("variavel_2"), 
+                            to = c("colheita"))
+  whitelist_A6 = data.frame(from = c("variavel_1"), 
+                            to = c("colheita"))
   blacklist = data.frame(from = c("variavel_1","variavel_1",
                                 "variavel_2", "variavel_2",
                                 "variavel_3", "variavel_3",
@@ -624,89 +499,144 @@ blacklist = data.frame(from = c("variavel_1","variavel_1",
                        to = c("variavel_2", "variavel_3", #from v1 
                               "variavel_1", "variavel_3", #from v2
                               "variavel_1", "variavel_2", #from v3
-                              "variavel_1", "variavel_2", "variavel_3" #from col
-                              ))
-   manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
-  arc_set = as.matrix(whitelist)
-  arcs(manual_dag) = arc_set
-  plot(manual_dag)
-
-  hc_dag_2 <-hc(areas_teste[[1]][[1]])
+                              "variavel_1", "variavel_2", "variavel_3")) #from col
   
-  bn1 = bn.fit(manual_dag, areas_teste[[1]][[1]])
-  bn2 = bn.fit(hc_dag_2, areas_teste[[1]][[1]])
-  
-  # validaRede()
-   
-}else  if(substr(names(areas_treino[1]),13,13) == 5){
-  print("tipo 5")
-  
-  whitelist = data.frame(from = c("variavel_2"), 
-                         to = c("colheita"))
-  
-  blacklist = data.frame(from = c("variavel_1","variavel_1",
-                                "variavel_2", "variavel_2",
-                                "variavel_3", "variavel_3",
-                                "colheita",  "colheita",  "colheita" ), 
-                       to = c("variavel_2", "variavel_3", #from v1 
-                              "variavel_1", "variavel_3", #from v2
-                              "variavel_1", "variavel_2", #from v3
-                              "variavel_1", "variavel_2", "variavel_3" #from col
-                              ))
-  manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
-  arc_set = as.matrix(whitelist)
-  arcs(manual_dag) = arc_set
-  plot(manual_dag)
-
-  hc_dag_2 <-hc(areas_teste[[1]][[1]])
-  
-  bn1 = bn.fit(manual_dag, areas_teste[[1]][[1]])
-  bn2 = bn.fit(hc_dag_2, areas_teste[[1]][[1]])
-  
-  # validaRede()
-   
-}else  if(substr(names(areas_treino[1]),13,13) == 6){
-  print("tipo 6")
-  whitelist = data.frame(from = c("variavel_1"),
-                         to = c("colheita"))
-
-  blacklist = data.frame(from = c("variavel_1","variavel_1",
-                                "variavel_2", "variavel_2",
-                                "variavel_3", "variavel_3",
-                                "colheita",  "colheita",  "colheita" ), 
-                       to = c("variavel_2", "variavel_3", #from v1 
-                              "variavel_1", "variavel_3", #from v2
-                              "variavel_1", "variavel_2", #from v3
-                              "variavel_1", "variavel_2", "variavel_3" #from col
-                              ))
-   manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
-  arc_set = as.matrix(whitelist)
-  arcs(manual_dag) = arc_set
-  plot(manual_dag)
-
-  hc_dag_2 <-hc(areas_teste[[1]][[1]])
-  
-  bn1 = bn.fit(manual_dag, areas_teste[[1]][[1]])
-  bn2 = bn.fit(hc_dag_2, areas_teste[[1]][[1]])
-  
-   #validaRede()
-   
-}
-
-
-#AINDA NÃO SEI COMO GERAR AS REDES DE FORMA AUTOMÁTICA SATISFATORIAMENTE, 
-# PORÉM, DEPOIS DE GERADAS VOU PRECISAR USAR ELA DE MODO AUTOMÁTICO TBM
-# E PRA ISSO EU NÃO FAÇO A MENOR INDEIA DE COMO FAZER
+  if(areatype == 1){
+      hc_dag <-hc(treino, debug = FALSE, whitelist = whitelist_A1,
+              blacklist = blacklist)
+      plot(hc_dag)
+      hc_dag2 <-hc(treino, debug = FALSE)
+      plot(hc_dag2)
+      score(hc_dag, data = treino, type = "bic")
+      score(hc_dag2, data = treino, type = "bic")
+      hc_dag_fitted = bn.fit(hc_dag, treino)
+      hc_dag2_fitted = bn.fit(hc_dag2, treino)
+      
+      validaRede(teste, treino, hc_dag_fitted, hc_dag2_fitted)
+      
+  }else 
+    if(areatype == 2){
+      hc_dag <-hc(treino, debug = FALSE, whitelist = whitelist_A2,
+              blacklist = blacklist)
+      plot(hc_dag)
+      hc_dag2 <-hc(treino, debug = FALSE)
+      plot(hc_dag2)
+      score(hc_dag, data = treino, type = "bic")
+      score(hc_dag2, data = treino, type = "bic")
+      hc_dag_fitted = bn.fit(hc_dag, treino)
+      hc_dag2_fitted = bn.fit(hc_dag2, treino)
+      
+      validaRede(teste, treino, hc_dag_fitted, hc_dag2_fitted)
+    }else
+      if(areatype == 3){
+        hc_dag <-hc(treino, debug = FALSE, whitelist = whitelist_A3,
+                blacklist = blacklist)
+        plot(hc_dag)
+        hc_dag2 <-hc(treino, debug = FALSE)
+        plot(hc_dag2)
+        score(hc_dag, data = treino, type = "bic")
+        score(hc_dag2, data = treino, type = "bic")
+        hc_dag_fitted = bn.fit(hc_dag, treino)
+        hc_dag2_fitted = bn.fit(hc_dag2, treino)
+        
+        validaRede(teste, treino, hc_dag_fitted, hc_dag2_fitted)
+      }else
+        if(areatype == 4){
+          hc_dag <-hc(treino, debug = FALSE, whitelist = whitelist_A4,
+              blacklist = blacklist)
+          plot(hc_dag)
+          hc_dag2 <-hc(treino, debug = FALSE)
+          plot(hc_dag2)
+          score(hc_dag, data = treino, type = "bic")
+          score(hc_dag2, data = treino, type = "bic")
+          hc_dag_fitted = bn.fit(hc_dag, treino)
+          hc_dag2_fitted = bn.fit(hc_dag2, treino)
+          
+          validaRede(teste, treino, hc_dag_fitted, hc_dag2_fitted)
+        }else
+          if(areatype == 5){
+            hc_dag <-hc(treino, debug = FALSE, whitelist = whitelist_A5,
+              blacklist = blacklist)
+            plot(hc_dag)
+            hc_dag2 <-hc(treino, debug = FALSE)
+            plot(hc_dag2)
+            score(hc_dag, data = treino, type = "bic")
+            score(hc_dag2, data = treino, type = "bic")
+            hc_dag_fitted = bn.fit(hc_dag, treino)
+            hc_dag2_fitted = bn.fit(hc_dag2, treino)
+            
+            validaRede(teste, treino, hc_dag_fitted, hc_dag2_fitted)
+          }else 
+            if(areatype == 6){
+              hc_dag <-hc(treino, debug = FALSE, whitelist = whitelist_A6,
+              blacklist = blacklist)
+              plot(hc_dag)
+              hc_dag2 <-hc(treino, debug = FALSE)
+              plot(hc_dag2)
+              score(hc_dag, data = treino, type = "bic")
+              score(hc_dag2, data = treino, type = "bic")
+              hc_dag_fitted = bn.fit(hc_dag, treino)
+              hc_dag2_fitted = bn.fit(hc_dag2, treino)
+              
+              validaRede(teste, treino, hc_dag_fitted, hc_dag2_fitted)
+            }
+    
+ 
 }
 
 ```
 
+
+```{r validaRede}
+validaRede <- function(test, train, dag_fitted1, dag_fitted2) {
+  # Define Target variables (Variables to be predicted)
+  pred <-'colheita'
+  # Evidence variables (Variables that you will give information to the BN to do the prediction)
+  evid <- names(train)[!names(train) %in% pred]
+  
+  results1 <- bnMultiVarPrediction(bnFit = dag_fitted1, 
+                                  trainSet = train,
+                                  testSet = test,
+                                  to_predict = pred,
+                                  to_evidence = evid, 
+                                  calcFunction = 'predict')
+  
+  results2 <- bnMultiVarPrediction(bnFit = dag_fitted2, 
+                                  trainSet = train,
+                                  testSet = test,
+                                  to_predict = pred,
+                                  to_evidence = evid, 
+                                  calcFunction = 'predict')
+  
+  
+  #cat("\nresultados dag2: ", results2)
+  
+  
+  # Metrics Evaluation
+  
+  print("metricas dag1: ")
+  metrics1 <- bnMetricsMultiVarPrediction(reference = test[pred],
+                                         prediction = results1$dominantList,
+                                         predProbList = results1$probList)
+  print("metricas dag2: ")
+  metrics2 <- bnMetricsMultiVarPrediction(reference = test[pred],
+                                         prediction = results2$dominantList,
+                                         predProbList = results2$probList)
+  print("Matriz de confusão dag 1:")
+  print(metrics1$cmList)
+  print("Matriz de confusão dag 2:")
+  print(metrics2$cmList)
+  
+}
+```
+
+
 #### testes
 
-```{r}
+```{r iniciaTeste}
 iniciaTeste <- function(){
   file_path = "/home/gui/TCC/R/meu_pacote/teste1.csv"
-  nHarvests = 33
+  nHarvests = 100
   nphases = 5
   nAreas = 2
   nVars = 3
@@ -726,7 +656,11 @@ iniciaTeste <- function(){
   
     for(area in  1:length(areas_list)){#para cada área
       for(fase in 1:length(areas_list[[1]])){#para cada fase da área
-        areas_list[[area]][[fase]] <- discretize(areas_list[[area]][[fase]], breaks = 5)
+        areas_list[[area]][[fase]] <- discretize(areas_list[[area]][[fase]],
+                                                 ordered = FALSE,
+                                                 method = 'hartemink', 
+                                                 ibreaks = 25,
+                                                 breaks = 5)
         for(var in 1:dim(areas_list[[1]][[fase]])[2]){#para cada variável da área/fase
           levels(areas_list[[area]][[fase]][,var]) <- class_names
         }
@@ -745,424 +679,317 @@ iniciaTeste <- function(){
 }
 ```
 
-```{r}
-validaRede <- function(areas_teste, bn){
-  
-  #função para testar a capacidade de inferência da REDE
-  #por enquanto apenas printa os testes
-  #preciso aplicar métodos de verdade de validação tipo matriz de confusão etc
-  #tentei e não consegui especificar o DF como parâmetro mas não consigo
-  
-  for(colheita in 1 : length(areas_teste[[1]][[1]][,1])){
-    cat("colheita", colheita, ":\n") 
-    for (class in 1: length(class_names)){ 
-      temp = class_names[class] 
-      cat("Classe:", temp, ":") 
-      print(cpquery(bn, 
-                  event = (colheita ==temp),
-                  evidence = ((variavel_1 == areas_teste[[6]][[5]]['variavel_1'][colheita,1]) &
-                                (variavel_2 == areas_teste[[6]][[5]]['variavel_2'][colheita,1]) & 
-                                (variavel_3 == areas_teste[[6]][[5]]['variavel_3'][colheita,1])))) 
-  }
-}
-  }
-```
 
 ```{r metricas}
-
-# trecho copiado do repositório https://github.com/KaikeWesleyReis/bnlearn-multivar-prediction-metrics
-# VER COMO CITAR NO TCC, CASO MANTIDO
-
-# FUNCTION - Multi Variable Discrete prediction
-bnMultiVarPrediction <- function(bnFit, trainSet, testSet, to_predict, to_evidence, nSamples = NULL, calcFunction = NULL){
-  # Probabilities predictions for each sample
-  pred_list_prob = list()
-  
-  # Dominant output predicted for each sample
-  pred_list_domi = list()
-  
-  # Auxiliar variables
-  N <- nrow(testSet) # Number of samples
-  np <- length(to_predict) # Number of variables to predict
-  
-  # Loop into all possible variables to Generate our output format
-  for(j in to_predict){
-    # TARGET LEVELS (CATEGORIES)
-    tv_lvls =  levels(trainSet[,j])
-    # DATAFRAME - PROBABILITIES PREDICTIONS
-    prob_pred <- setNames(data.frame(matrix(ncol = length(tv_lvls), nrow = N)), tv_lvls)
-    # DATAFRAME - DOMINANT OUTCOME
-    domi_pred <- setNames(data.frame(matrix(ncol = 1, nrow = N)), j)
-    # LISTS - APPEND
-    pred_list_prob[[j]] = prob_pred
-    pred_list_domi[[j]] = domi_pred
-  }
-  
-  # Multi Var Prediction :: PREDICT FUNCTION
-  if(calcFunction == 'predict' || is.null(calcFunction)){
-    for (i in 1:N){ 
-      # Prediction process
-      for(j in to_predict){
-        predicted = predict(bnFit, j, testSet[i, names(testSet) %in% to_evidence], prob = TRUE, method = 'bayes-lw')
-        ## TAKING IMPORTANT RESULTS
-        dominant = as.character(predicted)
-        probs = attr(predicted,'prob')
-        ## DOMINANT OUTPUT
-        pred_list_domi[[j]][i,j] = dominant
-        ## PROBABILITY OUTPUT
-        tv_lvls = colnames(pred_list_prob[[j]])
-        ## LOOP INTO ALL LEVELS TO SAVE YOUR PROBABILITY
-        for(k in tv_lvls){ 
-          pred_list_prob[[j]][i,k] = as.numeric(probs[k,])
-        }
-      }
-    }    
-  }
-  
-  # Multi Var Prediction :: CPDIST FUNCTION
-  else if(calcFunction == 'cpdist'){
-    # nSamples Verification
-    if(is.null(nSamples) || typeof(nSamples) != 'double'){ # Default value for N samples is 10.000 samples generated
-      nSamples <- 10000
-    }
-    # Prediction process
-    for (i in 1:N){
-      predicted = cpdist(fitted = bnFit, nodes = to_predict, evidence = as.list(test[i, names(test) %in% to_evidence]), n = nSamples, method = 'lw')
-      for(j in to_predict){ # Loop into all variables to be predicted
-        # PROBABILITY OUTPUT
-        probs = table(predicted[,j])/nrow(predicted)
-        # DOMINANT OUTPUT
-        pred_list_domi[[j]][i,j] = names(which.max(probs))
-        # KEEP PROB VALUES
-        tv_lvls = colnames(pred_list_prob[[j]])
-        for(k in tv_lvls){ # Loop into all lvls to save the probability
-          pred_list_prob[[j]][i,k] = as.numeric(probs[k])
-        }
-      }
-    }    
-  }
-  
-  # Turn dominant output in factors - help metrics CM
-  for(j in to_predict){
-    #levels(pred_list_domi[[j]]) <- levels(trainSet[,j])
-    pred_list_domi[[j]] <- factor(x = unlist(pred_list_domi[[j]], use.names = F), levels = levels(trainSet[,j]))
-  }
-  # Returning
-  ret_list <- list("probList" = pred_list_prob, "dominantList" = pred_list_domi)
-  return(ret_list)
-}
-
-# FUNCTION - Metrics :: Confusion Matrix by OVA and Scoring Rules
-bnMetricsMultiVarPrediction <- function(reference, prediction, predProbList){
-  # AUXILIAR VARs
-  np <- length(names(prediction))
-  to_predict <- names(prediction)
-  N <- nrow(reference)
-  
-  # METRICS DATASET CREATION
-  metricsType <- c('accuracy','accuracyOVA','sensibilityOVA','specificityOVA','precisionOVA','f1-scoreOVA','mccOVA','sphericalPayoff','brierLoss','logLoss')
-  metrics <- setNames(data.frame(matrix(ncol = length(metricsType), nrow = length(to_predict)), row.names = to_predict), metricsType)
-  
-  
-  # CONFUSION MATRIX
-  cm_list <- setNames(vector(mode = "list", length = np), to_predict)
-  for(j in to_predict){
-    cm_list[[j]] <- table(prediction[[j]], reference[[j]])
-    
-    #### PRINT - CM
-    #cat(paste('CONFUSION MATRIX - ',j,' Variable:\n'))
-    #print(cm_list[[j]])
-    #cat('\n')
-    
-  }
-  
-  # ONE VS ALL (OVA) CALCULATION
-  ova_list <- setNames(vector(mode = "list", length = np), to_predict)
-  for(j in to_predict){
-    # OVA INIT
-    lvls_var = colnames(cm_list[[j]])
-    ova_list[[j]] <- setNames(vector(mode = "list", length = length(lvls_var)), lvls_var)
-    
-    ### PRINT
-    #cat(paste('ONE VS ALL - ',j,'Variable:\n\n'))
-    
-    # LOOP TO DEVELOP EACH v CLASS VS ALL MATRIX FOR A j VARIABLE
-    for(v in lvls_var){
-      ## MATRIX CREATION
-      ova_lvl <- matrix(0,nrow = 2, ncol = 2)
-      row.names(ova_lvl) = c(v,'All')
-      colnames(ova_lvl) = c(v,'All')
-      ## RENAME cm_list FROM OUR j VARIABLE TO BETTER CODE READING
-      cm = cm_list[[j]]
-      ## AUXILIAR VARIABLES
-      rs = rowSums(cm) 
-      cs = colSums(cm)
-      n = sum(cm)
-      
-      ## TAKING BINARIES VALUES FROM A BINARY C.M.
-      tp = cm[v,v]
-      fn = rs[v] - cm[v,v]
-      fp = cs[v] - cm[v,v]
-      tn = n - rs[v] - cs[v] + cm[v,v]
-      
-      ## INSERT THE VALUES IN OVA C.M.
-      ova_lvl[v,v] <- tp
-      ova_lvl[v,'All'] <- fn
-      ova_lvl['All',v] <- fp
-      ova_lvl['All','All'] <- tn
-      
-      ## SAVE OVA INSIDE THE LIST FOR THAT j TARGET
-      ova_list[[j]][[v]] <- ova_lvl
-      
-      #### PRINT - OVA
-      #print(ova_list[[j]][[v]])
-      #cat('\n')
-      
-    }
-  }
-  
-  # CONFUSION MATRIX METRICS - ONE VS ALL :: SEN, SPECIFICITY, RECALL, ACCURACY, F1-SCORE, MCC, ACCURACY OVA
-  for(j in to_predict){
-    cm <- cm_list[[j]]
-    # ACCURACY
-    cmACC <- 100*(sum(diag(cm))/sum(cm))
-    
-    ### SAVE INTO DATAFRAME RESULT
-    metrics[j,'accuracy'] <- round(cmACC,2)
-    
-    ### PRINT - ACCURACY MULTI-CLASS
-    cat(paste('#### CONFUSION MATRIX METRICS - ',j,' Variable ####\n'))
-    cat(paste('+ ACCURACY: ', round(cmACC,2),'\n'))
-    
-    ## OVA :: AUXILIAR VARIABLES - REPRESENT VECTOR FOR EACH v LEVELS VS ALL
-    acc = c()
-    sen = c()
-    spe = c()
-    pre = c()
-    f1s = c()
-    mcc = c()
-    ## OVA :: AUXILIAR VARs
-    lvls <- names(ova_list[[j]])
-    len_lvls <- length(lvls)
-    ## OVA :: LOOP INTO ALL l LEVELS FROM j VARIABLE TO CALCULATE METRICS FOR EACH LEVEL
-    for(l in lvls){
-      ## AUXILIAR VARIABLE TO IMPROVE CODE READING
-      ovaCM <- ova_list[[j]][[l]]
-      ## GETTING BINARY TERMS FROM ovaCM
-      tp = ovaCM[l,l]
-      fn = ovaCM[l,'All']
-      fp = ovaCM['All',l]
-      tn = ovaCM['All','All']
-      
-      ## CALCULATE METRICS FOR THAT LVL AND SUM WITH PREVIOUS PART 1
-      acc = c(acc,((tp+tn)/(tp+tn+fp+fn)))
-      sen = c(sen,(tp/(tp+fn)))
-      spe = c(spe,(tn/(tn+fp)))
-      pre = c(pre,(tp/(tp+fp)))
-      
-      # AUXILIAR CALCULATION FOR MCC AND F1S
-      sen_unq = tp/(tp+fn)
-      pre_unq = tp/(tp+fp)
-      f1s_unq = 2*((sen_unq*pre_unq)/(sen_unq+pre_unq))
-      mcc_num = (tp*tn) - (fp*fn)
-      mcc_den = (tp+fp)*(tp+fn)*(tn+fp)*(tn+fn)
-      
-      ## CALCULATE METRICS FOR THAT LVL AND SUM WITH PREVIOUS PART 2
-      f1s = c(f1s,f1s_unq)
-      mcc = c(mcc,(mcc_num/sqrt(mcc_den)))
-    }
-    ## OVA :: RESULT FOR EACH j VARIABLE BASED ON A MEAN FROM ALL OVA MATRIX FROM THAT VARIABLE i.e. ALL LEVELS OVA MATRIX
-    cmACC_ova <- 100*(sum(acc, na.rm = T)/len_lvls)
-    cmSEN_ova <- 100*(sum(sen, na.rm = T)/len_lvls)
-    cmSPE_ova <- 100*(sum(spe, na.rm = T)/len_lvls)
-    cmPRE_ova <- 100*(sum(pre, na.rm = T)/len_lvls)
-    cmF1S_ova <- 100*(sum(f1s, na.rm = T)/len_lvls)
-    cmMCC_ova <- 100*(sum(mcc, na.rm = T)/len_lvls)
-    
-    ### PRINT - OVA METRICS
-    cat(paste('+ ACCURACY OVA: ', round(cmACC_ova,2),'\n'))
-    cat(paste('+ SENSIBILITY OVA: ', round(cmSEN_ova,2),'\n'))
-    cat(paste('+ SPECIFICITY OVA: ', round(cmSPE_ova,2),'\n'))
-    cat(paste('+ PRECISION OVA: ', round(cmPRE_ova,2),'\n'))
-    cat(paste('+ F1-SCORE OVA: ', round(cmF1S_ova,2),'\n'))
-    cat(paste('+ MCC OVA: ', round(cmMCC_ova,2),'\n'))
-    
-    ### SAVE INTO DATAFRAME RESULT
-    metrics[j,'accuracyOVA'] <- round(cmACC_ova,2)
-    metrics[j,'sensibilityOVA'] <- round(cmSEN_ova,2)
-    metrics[j,'specificityOVA'] <- round(cmSPE_ova,2)
-    metrics[j,'precisionOVA'] <- round(cmPRE_ova,2)
-    metrics[j,'f1-scoreOVA'] <- round(cmF1S_ova,2)
-    metrics[j,'mccOVA'] <- round(cmMCC_ova,2)
-    
-  }
-  
-  # SCORING RULES CALC
-  for(j in to_predict){
-    ## AUXILIAR VARIABLES
-    aux_prob <- predProbList[[j]]
-    cor_test <- reference[j]
-    states <- colnames(aux_prob)
-    
-    ## TERMS FOR THE FORMULAS :: init
-    pc = 0
-    pj_2 = 0
-    sum_pj = 0
-    
-    ## TERMS FOR :: SPHERICAL PAYOFF
-    smp_spher_payoff = 0
-    srSP = 0
-    
-    ## TERMS FOR :: BRIER LOSS
-    smp_brier_loss = 0
-    srBL = 0
-    
-    ## TERMS FOR :: LOG LOSS
-    smp_log_loss = 0
-    srLL = 0
-    
-    ## LOOP THROUGH ALL THE N SAMPLES PREDICTED
-    for(i in 1:N){
-      correct_state = cor_test[i,]
-      ## TERMS CALCULATION
-      pc = aux_prob[i,correct_state]
-      sum_pj = 0
-      for(s in states){
-        pj_2 = aux_prob[i,s] * aux_prob[i,s]
-        sum_pj = sum_pj + pj_2
-      }
-      
-      ## SCORING RULE CALC FOR EACH SAMPLE - SP
-      smp_spher_payoff = pc/sqrt(sum_pj)
-      srSP = srSP + smp_spher_payoff
-      
-      ## SCORING RULE CALC FOR EACH SAMPLE - BL 
-      #smp_brier_loss = 1-(2*pc+sum_pj)
-      smp_brier_loss = 2*pc-sum_pj
-      srBL = srBL + smp_brier_loss   
-      
-      ## SCORING RULE CALC FOR EACH SAMPLE - LL
-      smp_log_loss = (-log(pc))
-      srLL = srLL + smp_log_loss
-    }
-    
-    ## RESULT - SPHERICAL PAYOFF (MOAC)
-    srSP = srSP/N
-    srBL = srBL/N
-    srLL = srLL/N
-    
-    ### PRINT - SCORING RULES
-    cat(paste('#### SCORING RULES METRICS - ',j,' Variable ####\n'))
-    cat(paste('+ SPHERICAL PAYOFF: ', round(srSP,2),'\n'))
-    cat(paste('+ BRIER LOSS: ', round(srBL,2),'\n'))
-    cat(paste('+ LOG LOSS: ', round(srLL,2),'\n'))
-    
-    ### SAVE INTO DATAFRAME RESULT
-    metrics[j,'sphericalPayoff'] <- round(srSP,2)
-    metrics[j,'brierLoss'] <- round(srBL,2)
-    metrics[j,'logLoss'] <- round(srLL,2)
-  }
-  
-  # RETURN
-  ret_list <- list('cmList' = cm_list, 'ovaList' = ova_list, 'eval' = metrics)
-  
-}
+# 
+# # trecho copiado do repositório https://github.com/KaikeWesleyReis/bnlearn-multivar-prediction-metrics
+# # VER COMO CITAR NO TCC, CASO MANTIDO
+# 
+# # FUNCTION - Multi Variable Discrete prediction
+# bnMultiVarPrediction <- function(bnFit, trainSet, testSet, to_predict, to_evidence, nSamples = NULL, calcFunction = NULL){
+#   # Probabilities predictions for each sample
+#   pred_list_prob = list()
+#   
+#   # Dominant output predicted for each sample
+#   pred_list_domi = list()
+#   
+#   # Auxiliar variables
+#   N <- nrow(testSet) # Number of samples
+#   np <- length(to_predict) # Number of variables to predict
+#   
+#   # Loop into all possible variables to Generate our output format
+#   for(j in to_predict){
+#     # TARGET LEVELS (CATEGORIES)
+#     tv_lvls =  levels(trainSet[,j])
+#     # DATAFRAME - PROBABILITIES PREDICTIONS
+#     prob_pred <- setNames(data.frame(matrix(ncol = length(tv_lvls), nrow = N)), tv_lvls)
+#     # DATAFRAME - DOMINANT OUTCOME
+#     domi_pred <- setNames(data.frame(matrix(ncol = 1, nrow = N)), j)
+#     # LISTS - APPEND
+#     pred_list_prob[[j]] = prob_pred
+#     pred_list_domi[[j]] = domi_pred
+#   }
+#   
+#   # Multi Var Prediction :: PREDICT FUNCTION
+#   if(calcFunction == 'predict' || is.null(calcFunction)){
+#     for (i in 1:N){ 
+#       # Prediction process
+#       for(j in to_predict){
+#         predicted = predict(bnFit, j, testSet[i, names(testSet) %in% to_evidence], prob = TRUE, method = 'bayes-lw')
+#         ## TAKING IMPORTANT RESULTS
+#         dominant = as.character(predicted)
+#         probs = attr(predicted,'prob')
+#         ## DOMINANT OUTPUT
+#         pred_list_domi[[j]][i,j] = dominant
+#         ## PROBABILITY OUTPUT
+#         tv_lvls = colnames(pred_list_prob[[j]])
+#         ## LOOP INTO ALL LEVELS TO SAVE YOUR PROBABILITY
+#         for(k in tv_lvls){ 
+#           pred_list_prob[[j]][i,k] = as.numeric(probs[k,])
+#         }
+#       }
+#     }    
+#   }
+#   
+#   # Multi Var Prediction :: CPDIST FUNCTION
+#   else if(calcFunction == 'cpdist'){
+#     # nSamples Verification
+#     if(is.null(nSamples) || typeof(nSamples) != 'double'){ # Default value for N samples is 10.000 samples generated
+#       nSamples <- 10000
+#     }
+#     # Prediction process
+#     for (i in 1:N){
+#       predicted = cpdist(fitted = bnFit, nodes = to_predict, evidence = as.list(test[i, names(test) %in% to_evidence]), n = nSamples, method = 'lw')
+#       for(j in to_predict){ # Loop into all variables to be predicted
+#         # PROBABILITY OUTPUT
+#         probs = table(predicted[,j])/nrow(predicted)
+#         # DOMINANT OUTPUT
+#         pred_list_domi[[j]][i,j] = names(which.max(probs))
+#         # KEEP PROB VALUES
+#         tv_lvls = colnames(pred_list_prob[[j]])
+#         for(k in tv_lvls){ # Loop into all lvls to save the probability
+#           pred_list_prob[[j]][i,k] = as.numeric(probs[k])
+#         }
+#       }
+#     }    
+#   }
+#   
+#   # Turn dominant output in factors - help metrics CM
+#   for(j in to_predict){
+#     #levels(pred_list_domi[[j]]) <- levels(trainSet[,j])
+#     pred_list_domi[[j]] <- factor(x = unlist(pred_list_domi[[j]], use.names = F), levels = levels(trainSet[,j]))
+#   }
+#   # Returning
+#   ret_list <- list("probList" = pred_list_prob, "dominantList" = pred_list_domi)
+#   return(ret_list)
+# }
+# 
+# # FUNCTION - Metrics :: Confusion Matrix by OVA and Scoring Rules
+# bnMetricsMultiVarPrediction <- function(reference, prediction, predProbList){
+#   # AUXILIAR VARs
+#   np <- length(names(prediction))
+#   to_predict <- names(prediction)
+#   N <- nrow(reference)
+#   
+#   # METRICS DATASET CREATION
+#   metricsType <- c('accuracy','accuracyOVA','sensibilityOVA','specificityOVA','precisionOVA','f1-scoreOVA','mccOVA','sphericalPayoff','brierLoss','logLoss')
+#   metrics <- setNames(data.frame(matrix(ncol = length(metricsType), nrow = length(to_predict)), row.names = to_predict), metricsType)
+#   
+#   
+#   # CONFUSION MATRIX
+#   cm_list <- setNames(vector(mode = "list", length = np), to_predict)
+#   for(j in to_predict){
+#     cm_list[[j]] <- table(prediction[[j]], reference[[j]])
+#     
+#     #### PRINT - CM
+#     #cat(paste('CONFUSION MATRIX - ',j,' Variable:\n'))
+#     #print(cm_list[[j]])
+#     #cat('\n')
+#     
+#   }
+#   
+#   # ONE VS ALL (OVA) CALCULATION
+#   ova_list <- setNames(vector(mode = "list", length = np), to_predict)
+#   for(j in to_predict){
+#     # OVA INIT
+#     lvls_var = colnames(cm_list[[j]])
+#     ova_list[[j]] <- setNames(vector(mode = "list", length = length(lvls_var)), lvls_var)
+#     
+#     ### PRINT
+#     #cat(paste('ONE VS ALL - ',j,'Variable:\n\n'))
+#     
+#     # LOOP TO DEVELOP EACH v CLASS VS ALL MATRIX FOR A j VARIABLE
+#     for(v in lvls_var){
+#       ## MATRIX CREATION
+#       ova_lvl <- matrix(0,nrow = 2, ncol = 2)
+#       row.names(ova_lvl) = c(v,'All')
+#       colnames(ova_lvl) = c(v,'All')
+#       ## RENAME cm_list FROM OUR j VARIABLE TO BETTER CODE READING
+#       cm = cm_list[[j]]
+#       ## AUXILIAR VARIABLES
+#       rs = rowSums(cm) 
+#       cs = colSums(cm)
+#       n = sum(cm)
+#       
+#       ## TAKING BINARIES VALUES FROM A BINARY C.M.
+#       tp = cm[v,v]
+#       fn = rs[v] - cm[v,v]
+#       fp = cs[v] - cm[v,v]
+#       tn = n - rs[v] - cs[v] + cm[v,v]
+#       
+#       ## INSERT THE VALUES IN OVA C.M.
+#       ova_lvl[v,v] <- tp
+#       ova_lvl[v,'All'] <- fn
+#       ova_lvl['All',v] <- fp
+#       ova_lvl['All','All'] <- tn
+#       
+#       ## SAVE OVA INSIDE THE LIST FOR THAT j TARGET
+#       ova_list[[j]][[v]] <- ova_lvl
+#       
+#       #### PRINT - OVA
+#       #print(ova_list[[j]][[v]])
+#       #cat('\n')
+#       
+#     }
+#   }
+#   
+#   # CONFUSION MATRIX METRICS - ONE VS ALL :: SEN, SPECIFICITY, RECALL, ACCURACY, F1-SCORE, MCC, ACCURACY OVA
+#   for(j in to_predict){
+#     cm <- cm_list[[j]]
+#     # ACCURACY
+#     cmACC <- 100*(sum(diag(cm))/sum(cm))
+#     
+#     ### SAVE INTO DATAFRAME RESULT
+#     metrics[j,'accuracy'] <- round(cmACC,2)
+#     
+#     ### PRINT - ACCURACY MULTI-CLASS
+#     cat(paste('#### CONFUSION MATRIX METRICS - ',j,' Variable ####\n'))
+#     cat(paste('+ ACCURACY: ', round(cmACC,2),'\n'))
+#     
+#     ## OVA :: AUXILIAR VARIABLES - REPRESENT VECTOR FOR EACH v LEVELS VS ALL
+#     acc = c()
+#     sen = c()
+#     spe = c()
+#     pre = c()
+#     f1s = c()
+#     mcc = c()
+#     ## OVA :: AUXILIAR VARs
+#     lvls <- names(ova_list[[j]])
+#     len_lvls <- length(lvls)
+#     ## OVA :: LOOP INTO ALL l LEVELS FROM j VARIABLE TO CALCULATE METRICS FOR EACH LEVEL
+#     for(l in lvls){
+#       ## AUXILIAR VARIABLE TO IMPROVE CODE READING
+#       ovaCM <- ova_list[[j]][[l]]
+#       ## GETTING BINARY TERMS FROM ovaCM
+#       tp = ovaCM[l,l]
+#       fn = ovaCM[l,'All']
+#       fp = ovaCM['All',l]
+#       tn = ovaCM['All','All']
+#       
+#       ## CALCULATE METRICS FOR THAT LVL AND SUM WITH PREVIOUS PART 1
+#       acc = c(acc,((tp+tn)/(tp+tn+fp+fn)))
+#       sen = c(sen,(tp/(tp+fn)))
+#       spe = c(spe,(tn/(tn+fp)))
+#       pre = c(pre,(tp/(tp+fp)))
+#       
+#       # AUXILIAR CALCULATION FOR MCC AND F1S
+#       sen_unq = tp/(tp+fn)
+#       pre_unq = tp/(tp+fp)
+#       f1s_unq = 2*((sen_unq*pre_unq)/(sen_unq+pre_unq))
+#       mcc_num = (tp*tn) - (fp*fn)
+#       mcc_den = (tp+fp)*(tp+fn)*(tn+fp)*(tn+fn)
+#       
+#       ## CALCULATE METRICS FOR THAT LVL AND SUM WITH PREVIOUS PART 2
+#       f1s = c(f1s,f1s_unq)
+#       mcc = c(mcc,(mcc_num/sqrt(mcc_den)))
+#     }
+#     ## OVA :: RESULT FOR EACH j VARIABLE BASED ON A MEAN FROM ALL OVA MATRIX FROM THAT VARIABLE i.e. ALL LEVELS OVA MATRIX
+#     cmACC_ova <- 100*(sum(acc, na.rm = T)/len_lvls)
+#     cmSEN_ova <- 100*(sum(sen, na.rm = T)/len_lvls)
+#     cmSPE_ova <- 100*(sum(spe, na.rm = T)/len_lvls)
+#     cmPRE_ova <- 100*(sum(pre, na.rm = T)/len_lvls)
+#     cmF1S_ova <- 100*(sum(f1s, na.rm = T)/len_lvls)
+#     cmMCC_ova <- 100*(sum(mcc, na.rm = T)/len_lvls)
+#     
+#     ### PRINT - OVA METRICS
+#     cat(paste('+ ACCURACY OVA: ', round(cmACC_ova,2),'\n'))
+#     cat(paste('+ SENSIBILITY OVA: ', round(cmSEN_ova,2),'\n'))
+#     cat(paste('+ SPECIFICITY OVA: ', round(cmSPE_ova,2),'\n'))
+#     cat(paste('+ PRECISION OVA: ', round(cmPRE_ova,2),'\n'))
+#     cat(paste('+ F1-SCORE OVA: ', round(cmF1S_ova,2),'\n'))
+#     cat(paste('+ MCC OVA: ', round(cmMCC_ova,2),'\n'))
+#     
+#     ### SAVE INTO DATAFRAME RESULT
+#     metrics[j,'accuracyOVA'] <- round(cmACC_ova,2)
+#     metrics[j,'sensibilityOVA'] <- round(cmSEN_ova,2)
+#     metrics[j,'specificityOVA'] <- round(cmSPE_ova,2)
+#     metrics[j,'precisionOVA'] <- round(cmPRE_ova,2)
+#     metrics[j,'f1-scoreOVA'] <- round(cmF1S_ova,2)
+#     metrics[j,'mccOVA'] <- round(cmMCC_ova,2)
+#     
+#   }
+#   
+#   # SCORING RULES CALC
+#   for(j in to_predict){
+#     ## AUXILIAR VARIABLES
+#     aux_prob <- predProbList[[j]]
+#     cor_test <- reference[j]
+#     states <- colnames(aux_prob)
+#     
+#     ## TERMS FOR THE FORMULAS :: init
+#     pc = 0
+#     pj_2 = 0
+#     sum_pj = 0
+#     
+#     ## TERMS FOR :: SPHERICAL PAYOFF
+#     smp_spher_payoff = 0
+#     srSP = 0
+#     
+#     ## TERMS FOR :: BRIER LOSS
+#     smp_brier_loss = 0
+#     srBL = 0
+#     
+#     ## TERMS FOR :: LOG LOSS
+#     smp_log_loss = 0
+#     srLL = 0
+#     
+#     ## LOOP THROUGH ALL THE N SAMPLES PREDICTED
+#     for(i in 1:N){
+#       correct_state = cor_test[i,]
+#       ## TERMS CALCULATION
+#       pc = aux_prob[i,correct_state]
+#       sum_pj = 0
+#       for(s in states){
+#         pj_2 = aux_prob[i,s] * aux_prob[i,s]
+#         sum_pj = sum_pj + pj_2
+#       }
+#       
+#       ## SCORING RULE CALC FOR EACH SAMPLE - SP
+#       smp_spher_payoff = pc/sqrt(sum_pj)
+#       srSP = srSP + smp_spher_payoff
+#       
+#       ## SCORING RULE CALC FOR EACH SAMPLE - BL 
+#       #smp_brier_loss = 1-(2*pc+sum_pj)
+#       smp_brier_loss = 2*pc-sum_pj
+#       srBL = srBL + smp_brier_loss   
+#       
+#       ## SCORING RULE CALC FOR EACH SAMPLE - LL
+#       smp_log_loss = (-log(pc))
+#       srLL = srLL + smp_log_loss
+#     }
+#     
+#     ## RESULT - SPHERICAL PAYOFF (MOAC)
+#     srSP = srSP/N
+#     srBL = srBL/N
+#     srLL = srLL/N
+#     
+#     ### PRINT - SCORING RULES
+#     cat(paste('#### SCORING RULES METRICS - ',j,' Variable ####\n'))
+#     cat(paste('+ SPHERICAL PAYOFF: ', round(srSP,2),'\n'))
+#     cat(paste('+ BRIER LOSS: ', round(srBL,2),'\n'))
+#     cat(paste('+ LOG LOSS: ', round(srLL,2),'\n'))
+#     
+#     ### SAVE INTO DATAFRAME RESULT
+#     metrics[j,'sphericalPayoff'] <- round(srSP,2)
+#     metrics[j,'brierLoss'] <- round(srBL,2)
+#     metrics[j,'logLoss'] <- round(srLL,2)
+#   }
+#   
+#   # RETURN
+#   ret_list <- list('cmList' = cm_list, 'ovaList' = ova_list, 'eval' = metrics)
+#   
+# }
 
 ```
 
+
 ```{r TESTE} 
-
-areas_treino <- iniciaTeste() 
-areas_teste <- iniciaTeste()
-
-
-# RASCUNHO:
-# DAQUI pra baixo sõa testes das funções do pacote.
-summary(areas_treino[[1]][[4]])
-
-# aqui abaixo eu testo alguns algorítomos de aprendizado de estrutura de 
-# redes bayesianas, mas não evoluiu muito por conta dos problemas 
-# que te reportei mais acima
-
-## esse trecho abaixo DEVERIA ir pra função CriaRedes() a IDEIA da função
-## CriaRedes seria gerar várias redes por vários algorítmos de aprendizados de
-## estrutura e selecionar o com o melhor score 
-##  (a função score() parece promissora pra isso), mas não estudei ela o suficiente
-
-
-## DE QQ FORMA abaixo gero uma rede pelo algorírmo Hill climbing, pra área 1
-# e teste ela 
-
-#### Hill climbing ###
-
-  whitelist = data.frame(from = c("variavel_1", "variavel_2", "variavel_3"), to = c("colheita", "colheita", "colheita"))
-  blacklist = data.frame(from = c("variavel_1","variavel_1",
-                                "variavel_2", "variavel_2",
-                                "variavel_3", "variavel_3",
-                                "colheita",  "colheita",  "colheita" ), 
-                       to = c("variavel_2", "variavel_3", #from v1 
-                              "variavel_1", "variavel_3", #from v2
-                              "variavel_1", "variavel_2", #from v3
-                              "variavel_1", "variavel_2", "variavel_3")) #from col
-  
-  hc_dag <-hc(areas_treino[[1]][[4]], debug = FALSE, whitelist = whitelist, blacklist = blacklist)
-  plot(hc_dag)
-  hc_dag2 <-hc(areas_treino[[1]][[4]], debug = FALSE)
-  plot(hc_dag2) 
-  
-  
-  score(hc_dag, data = areas_treino[[1]][[4]], type = "bic")
-  score(hc_dag2, data = areas_treino[[1]][[4]], type = "bic")
-  
-  arc.strength(hc_dag, data = areas_treino[[1]][[4]], criterion = "bic")
-  arc.strength(hc_dag2, data = areas_treino[[1]][[4]], criterion = "bic")
-
-  hc_dag_fitted = bn.fit(hc_dag, areas_treino[[1]][[4]])
-  hc_dag2_fitted = bn.fit(hc_dag2, areas_treino[[1]][[4]])
-  
-  #areas_teste_disc
-  #bn_hc_dag[[4]]
-  
-  #Esse trecho das próximas linhas DEVERIAM estar na função 'validaRede()'
-  cpquery(hc_dag_fitted, 
-                  event = (colheita == "A"),
-                  evidence = ((variavel_1 == "B") &
-                                (variavel_2 == "A") & 
-                                (variavel_3 == "A")))
-  
-  
-### RASCUNHO
-  # TEM POTENCIAL
-  
-# Define Train and Test
-  test <- areas_teste[[1]][[4]]
-  train <- areas_treino[[1]][[4]]
-  
-# Create and fit model
-  #hc_dag_fitted = bn.fit(hc_dag, areas_treino[[1]][[4]])
-  #hc_dag2_fitted = bn.fit(hc_dag2, areas_treino[[1]][[4]])
-# Plot model
-  #plot(hc(train))
-  
-# Define Target variables (Variables to be predicted)
-  pred <-'colheita'
-# Evidence variables (Variables that you will give information to the BN to do the prediction)
-  evid <- names(train)[!names(train) %in% pred]
-
-# Multi var Prediction
-results <- bnMultiVarPrediction(bnFit = hc_dag_fitted, 
-                                trainSet = train,
-                                testSet = test,
-                                to_predict = pred,
-                                to_evidence = evid, 
-                                calcFunction = 'predict')
-results
-
-# Metrics Evaluation
-metrics <- bnMetricsMultiVarPrediction(reference = test[pred],
-                                       prediction = results$dominantList,
-                                       predProbList = results$probList)
-  
-  
-
+areas <- iniciaTeste()
+summary(areas_treino[[1]][[1]])
+CriaRedes(areas[[1]][[1]], 1)
+CriaRedes(areas[[2]][[1]], 2)
+CriaRedes(areas[[3]][[1]], 3)
+CriaRedes(areas[[4]][[1]], 4)
+CriaRedes(areas[[5]][[1]], 5)
+CriaRedes(areas[[6]][[1]], 6)
 ```
