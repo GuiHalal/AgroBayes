@@ -456,54 +456,54 @@ CriaRedes <- function (areaphase, areatype){
                               "variavel_1", "variavel_2", #from v3
                               "variavel_1", "variavel_2", "variavel_3")) #from col
   
-  # constroi whitelist conforme tipo de área
-  if(areatype == 1){
-      whitelist = data.frame(from = c("variavel_1", "variavel_2", "variavel_3"), 
+      whitelist_A1 = data.frame(from = c("variavel_1", "variavel_2", "variavel_3"), 
                             to = c("colheita", "colheita", "colheita"))
-    }else if(areatype == 2){
-      whitelist = data.frame(from = c("variavel_1"), 
-                            to = c("colheita"))
-    }else if(areatype == 3){
-      whitelist = data.frame(from = c("variavel_3"), 
-                            to = c("colheita"))
-    }else if(areatype == 4){
-      whitelist = data.frame(from = c("variavel_1", "variavel_3"), 
-                            to = c("colheita", "colheita"))
-    }else if(areatype == 5){
-      whitelist = data.frame(from = c("variavel_2"), 
-                            to = c("colheita"))
-    }else if(areatype == 6){
-      whitelist = data.frame(from = c("variavel_1"),
-                                        to = c("colheita"))
-    }
-    
-  
-      # cria rede alg HC com definicao da topologia da rede
-      hc_dag <-hc(treino, debug = FALSE, whitelist = whitelist,
-         blacklist = blacklist)
       
-      # plot rede criada acima
+      
+      # hc_dag =      Hill-Climbing COM definicao da topologia da rede
+      # hc_dag_raw =  Hill-Climbing SEM definicao da topologia da rede
+      # mmhc_dag =      Max-Min Hill-Climbing COM definicao da topologia da rede
+      # mmhc_dag_raw =  Max-Min Hill-Climbing SEM definicao da topologia da rede
+      
+      # Score-based Learning Algorithm
+      
+      hc_dag <-hc(treino, 
+                  whitelist = whitelist_A1,
+                  blacklist = blacklist,
+                  debug = FALSE)
       plot(hc_dag)
+
+      hc_dag_raw <-hc(treino, debug = FALSE)
+      plot(hc_dag_raw)
       
-      # cria rede alg HC sem definicao da topologia da rede
-      hc_dag2 <-hc(treino, debug = FALSE)
+     
+      # Hybrid Learning Algorithm
       
-      # plot rede criada acima
-      plot(hc_dag2)
+      mmhc_dag <- mmhc(treino, 
+                         whitelist = whitelist_A1,
+                         blacklist = blacklist,
+                         debug = FALSE)
+      plot(mmhc_dag)
+      
+      mmhc_dag_raw <- mmhc(treino, debug = FALSE)
+      plot(mmhc_dag_raw)
       
       # treina redes 
       hc_dag_fitted = bn.fit(hc_dag, treino)
-      
-      hc_dag2_fitted = bn.fit(hc_dag2, treino)
+      hc_dag_raw_fitted = bn.fit(hc_dag_raw, treino)
+
+      mmhc_dag_fitted = bn.fit(mmhc_dag, treino)
+      mmhc_dag_raw_fitted = bn.fit(mmhc_dag_raw, treino)
+
       
       # validacao das redes
-      return(validaRede(teste, treino, hc_dag_fitted, hc_dag2_fitted))
+      return(validaRede(teste, treino, hc_dag_fitted, hc_dag_raw_fitted, mmhc_dag_fitted, mmhc_dag_raw_fitted))
 }
 ```
 
 
 ```{r validaRede}
-validaRede <- function(test, train, dag_fitted1, dag_fitted2) {
+validaRede <- function(test, train, dag_fitted1, dag_fitted2, dag_fitted3, dag_fitted4) {
 # Define Target variables (Variables to be predicted)
   pred <-'colheita'
 # Evidence variables 
@@ -524,6 +524,19 @@ validaRede <- function(test, train, dag_fitted1, dag_fitted2) {
                                   to_evidence = evid, 
                                   calcFunction = 'predict')
   
+  results3 <- bnMultiVarPrediction(bnFit = dag_fitted3, 
+                                  trainSet = train,
+                                  testSet = test,
+                                  to_predict = pred,
+                                  to_evidence = evid, 
+                                  calcFunction = 'predict')
+  
+  results4 <- bnMultiVarPrediction(bnFit = dag_fitted4, 
+                                  trainSet = train,
+                                  testSet = test,
+                                  to_predict = pred,
+                                  to_evidence = evid, 
+                                  calcFunction = 'predict')
 # Metrics Evaluation
   
   #print("metricas dag1: ")
@@ -534,11 +547,19 @@ validaRede <- function(test, train, dag_fitted1, dag_fitted2) {
   metrics2 <- bnMetricsMultiVarPrediction(reference = test[pred],
                                          prediction = results2$dominantList,
                                          predProbList = results2$probList)
+  
+  metrics3 <- bnMetricsMultiVarPrediction(reference = test[pred],
+                                         prediction = results3$dominantList,
+                                         predProbList = results3$probList)
+  #print("metricas dag2: ")
+  metrics4 <- bnMetricsMultiVarPrediction(reference = test[pred],
+                                         prediction = results4$dominantList,
+                                         predProbList = results4$probList)
   # print("Matriz de confusão dag 1:")
   # print(metrics1$cmList)
   # print("Matriz de confusão dag 2:")
   # print(metrics2$cmList)
-  return(c(results1, metrics1 ,results2 , metrics2))
+  return(c(metrics1, metrics2, metrics3, metrics4))
 }
 ```
 
@@ -549,19 +570,27 @@ rodaRede <- function(areadf, areatype){
   out <- data.frame() 
   nome <- array()
   inome=1
-
   for(fase in 1:length(areadf)){
     area[[fase]] <- CriaRedes(areas[[1]][[fase]], areatype)
-    out <- bind_rows(out, area[[fase]][5])
-    nome[inome] <- paste("fase", fase, "dag-1")
+    
+    out <- bind_rows(out, area[[fase]][3])
+    nome[inome] <- paste("fase", fase, "hc_dag")
     inome = inome+1
-    out <- bind_rows(out, area[[fase]][10])
-    nome[inome] <- paste("fase", fase, "dag-2")
+    
+    out <- bind_rows(out, area[[fase]][6])
+    nome[inome] <- paste("fase", fase, "hc_dag_raw")
+    inome = inome+1
+    
+    out <- bind_rows(out, area[[fase]][9])
+    nome[inome] <- paste("fase", fase, "mmhc_dag")
+    inome = inome+1
+    
+    out <- bind_rows(out, area[[fase]][12])
+    nome[inome] <- paste("fase", fase, "mmhc_dag_raw")
     inome = inome+1
   }
   row.names(out$eval)<-nome
   return(out$eval)
-
 }
 
 ```
@@ -611,187 +640,64 @@ iniciaTeste <- function(){
 areas <- iniciaTeste()
 summary(areas[[1]][[1]])
 
-# https://github.com/dkesada/dbnR
-# 
+area1 <- rodaRede(areas[[1]], 1)
 
-area1 <- rodaRede__(areas[[1]], 1)
-## TESTE
-summary(area1)
-area1[, "accuracy"]
-which.max(area1[1:4,1]) 
+select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 1\\b", row.names(area1), fixed = FALSE, value = FALSE),]
+select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 2\\b", row.names(area1), fixed = FALSE, value = FALSE),]
+select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 3\\b", row.names(area1), fixed = FALSE, value = FALSE),]
+select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area1), fixed = FALSE, value = FALSE),]
+select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area1), fixed = FALSE, value = FALSE),]
 
-select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bhc_dag\\b", row.names(area1), fixed = FALSE, value = FALSE),]
+write.csv(area1, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area1.csv")
 
-
-write.csv(area1, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area1_++.csv")
 area2 <- rodaRede(areas[[2]], 2)
-# # write.csv(area2, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area2.csv")
-# # area3 <- rodaRede(areas[[3]], 3)
-# # write.csv(area3, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area3.csv")
-# # area4 <- rodaRede(areas[[4]], 4)
-# # write.csv(area4, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area4.csv")
-# # area5 <- rodaRede(areas[[5]], 5)
-# # write.csv(area5, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area5.csv")
-# # area6 <- rodaRede(areas[[6]], 6)
-# # write.csv(area6, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area6.csv")
 
-```
+select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 1\\b", row.names(area2), fixed = FALSE, value = FALSE),]
+select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 2\\b", row.names(area2), fixed = FALSE, value = FALSE),]
+select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 3\\b", row.names(area2), fixed = FALSE, value = FALSE),]
+select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area2), fixed = FALSE, value = FALSE),]
+select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area2), fixed = FALSE, value = FALSE),]
 
-```{r CriaRedes__}
-### Cria redes pra todas as fases fenológicas da área
-CriaRedes__ <- function (areaphase, areatype){
+write.csv(area2, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area2.csv")
 
-  sample = sample.split(areaphase, SplitRatio = 0.75)
-  treino = subset(areaphase, sample == TRUE, )
-  rownames(treino)<-NULL
-  teste  = subset(areaphase, sample == FALSE)
-  rownames(teste)<-NULL
-  
+area3 <- rodaRede(areas[[3]], 3)
 
-  blacklist = data.frame(from = c("variavel_1","variavel_1",
-                                "variavel_2", "variavel_2",
-                                "variavel_3", "variavel_3",
-                                "colheita",  "colheita",  "colheita" ), 
-                       to = c("variavel_2", "variavel_3", #from v1 
-                              "variavel_1", "variavel_3", #from v2
-                              "variavel_1", "variavel_2", #from v3
-                              "variavel_1", "variavel_2", "variavel_3")) #from col
-  
-      whitelist_A1 = data.frame(from = c("variavel_1", "variavel_2", "variavel_3"), 
-                            to = c("colheita", "colheita", "colheita"))
-      
-      
-      # hc_dag =      Hill-Climbing COM definicao da topologia da rede
-      # hc_dag_raw =  Hill-Climbing SEM definicao da topologia da rede
-      # mmhc_dag =      Max-Min Hill-Climbing COM definicao da topologia da rede
-      # mmhc_dag_raw =  Max-Min Hill-Climbing SEM definicao da topologia da rede
-      
-      # Score-based Learning Algorithm
-      
-      hc_dag <-hc(treino, 
-                  whitelist = whitelist_A1,
-                  blacklist = blacklist,
-                  debug = FALSE)
-      plot(hc_dag)
+select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 1\\b", row.names(area3), fixed = FALSE, value = FALSE),]
+select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 2\\b", row.names(area3), fixed = FALSE, value = FALSE),]
+select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 3\\b", row.names(area3), fixed = FALSE, value = FALSE),]
+select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area3), fixed = FALSE, value = FALSE),]
+select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area3), fixed = FALSE, value = FALSE),]
 
-      hc_dag_raw <-hc(treino, debug = FALSE)
-      plot(hc_dag_raw)
-      
-     
-      # Hybrid Learning Algorithm
-      
-      mmhc_dag <- mmhc(treino, 
-                         whitelist = whitelist_A1,
-                         blacklist = blacklist,
-                         debug = FALSE)
-      plot(mmhc_dag)
-      
-      mmhc_dag_raw <- mmhc(treino, debug = FALSE)
-      plot(mmhc_dag_raw)
-      
-      # treina redes 
-      hc_dag_fitted = bn.fit(hc_dag, treino)
-      hc_dag_raw_fitted = bn.fit(hc_dag_raw, treino)
+write.csv(area3, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area3.csv")
 
-      mmhc_dag_fitted = bn.fit(mmhc_dag, treino)
-      mmhc_dag_raw_fitted = bn.fit(mmhc_dag_raw, treino)
+area4 <- rodaRede(areas[[4]], 4)
 
-      
-      # validacao das redes
-      return(validaRede__(teste, treino, hc_dag_fitted, hc_dag_raw_fitted, mmhc_dag_fitted, mmhc_dag_raw_fitted))
-}
-```
+select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 1\\b", row.names(area4), fixed = FALSE, value = FALSE),]
+select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 2\\b", row.names(area4), fixed = FALSE, value = FALSE),]
+select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 3\\b", row.names(area4), fixed = FALSE, value = FALSE),]
+select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area4), fixed = FALSE, value = FALSE),]
+select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area4), fixed = FALSE, value = FALSE),]
 
-```{r validaRede__}
-validaRede__ <- function(test, train, dag_fitted1, dag_fitted2, dag_fitted3, dag_fitted4) {
-# Define Target variables (Variables to be predicted)
-  pred <-'colheita'
-# Evidence variables 
-#(Variables that you will give information to the BN to do the prediction)
-  evid <- names(train)[!names(train) %in% pred]
-  
-  results1 <- bnMultiVarPrediction(bnFit = dag_fitted1, 
-                                  trainSet = train,
-                                  testSet = test,
-                                  to_predict = pred,
-                                  to_evidence = evid, 
-                                  calcFunction = 'predict')
-  
-  results2 <- bnMultiVarPrediction(bnFit = dag_fitted2, 
-                                  trainSet = train,
-                                  testSet = test,
-                                  to_predict = pred,
-                                  to_evidence = evid, 
-                                  calcFunction = 'predict')
-  
-  results3 <- bnMultiVarPrediction(bnFit = dag_fitted3, 
-                                  trainSet = train,
-                                  testSet = test,
-                                  to_predict = pred,
-                                  to_evidence = evid, 
-                                  calcFunction = 'predict')
-  
-  results4 <- bnMultiVarPrediction(bnFit = dag_fitted4, 
-                                  trainSet = train,
-                                  testSet = test,
-                                  to_predict = pred,
-                                  to_evidence = evid, 
-                                  calcFunction = 'predict')
-# Metrics Evaluation
-  
-  #print("metricas dag1: ")
-  metrics1 <- bnMetricsMultiVarPrediction(reference = test[pred],
-                                         prediction = results1$dominantList,
-                                         predProbList = results1$probList)
-  #print("metricas dag2: ")
-  metrics2 <- bnMetricsMultiVarPrediction(reference = test[pred],
-                                         prediction = results2$dominantList,
-                                         predProbList = results2$probList)
-  
-  metrics3 <- bnMetricsMultiVarPrediction(reference = test[pred],
-                                         prediction = results3$dominantList,
-                                         predProbList = results1$probList)
-  #print("metricas dag2: ")
-  metrics4 <- bnMetricsMultiVarPrediction(reference = test[pred],
-                                         prediction = results4$dominantList,
-                                         predProbList = results2$probList)
-  # print("Matriz de confusão dag 1:")
-  # print(metrics1$cmList)
-  # print("Matriz de confusão dag 2:")
-  # print(metrics2$cmList)
-  return(c(results1, metrics1 ,results2 , metrics2, results3, metrics3, results4, metrics4))
-}
-```
+write.csv(area4, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area4.csv")
 
+area5 <- rodaRede(areas[[5]], 5)
 
-```{r rodaRede__}
-rodaRede__ <- function(areadf, areatype){
-  area <- list()
-  out <- data.frame() 
-  nome <- array()
-  inome=1
+select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 1\\b", row.names(area5), fixed = FALSE, value = FALSE),]
+select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 2\\b", row.names(area5), fixed = FALSE, value = FALSE),]
+select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 3\\b", row.names(area5), fixed = FALSE, value = FALSE),]
+select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area5), fixed = FALSE, value = FALSE),]
+select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area5), fixed = FALSE, value = FALSE),]
 
-  for(fase in 1:length(areadf)){
-    area[[fase]] <- CriaRedes__(areas[[1]][[fase]], areatype)
-    
-    out <- bind_rows(out, area[[fase]][5])
-    nome[inome] <- paste("fase", fase, "hc_dag")
-    inome = inome+1
-    
-    out <- bind_rows(out, area[[fase]][10])
-    nome[inome] <- paste("fase", fase, "hc_dag_raw")
-    inome = inome+1
-    
-    out <- bind_rows(out, area[[fase]][15])
-    nome[inome] <- paste("fase", fase, "mmhc_dag")
-    inome = inome+1
-    
-    out <- bind_rows(out, area[[fase]][20])
-    nome[inome] <- paste("fase", fase, "mmhc_dag_raw")
-    inome = inome+1
-  }
-  row.names(out$eval)<-nome
-  return(out$eval)
+write.csv(area5, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area5.csv")
 
-}
+area6 <- rodaRede(areas[[6]], 6)
+
+select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 1\\b", row.names(area6), fixed = FALSE, value = FALSE),]
+select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 2\\b", row.names(area6), fixed = FALSE, value = FALSE),]
+select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 3\\b", row.names(area6), fixed = FALSE, value = FALSE),]
+select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area6), fixed = FALSE, value = FALSE),]
+select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area6), fixed = FALSE, value = FALSE),]
+
+write.csv(area6, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area6.csv")
+
 ```
