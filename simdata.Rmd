@@ -6,6 +6,7 @@ output:
 ---
 
 ## Pacote R com as funções de treinamento, execução e visualização de dados
+
 ##### importações
 
 ```{r imports}
@@ -13,12 +14,14 @@ library(bnlearn)
 library(Hmisc)
 library(dplyr)
 library(caTools)
+library(ggplot2)
 source('bnlearn_discrete_multivar_prediction_eval.R')
 set.seed(101) 
+library(dbnR)
+library(data.table)
 #library(rbmn)
 #library(caret)
 ```
-
 
 ```{r BuildSimulationData}
 BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
@@ -89,7 +92,6 @@ BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
 }
 ```
 
-
 ```{r defVars}
 # função para geração das variáveis
 # chamada no escopo da função BuildSimulationData
@@ -141,7 +143,6 @@ defVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
 
 ```
 
-
 ```{r setSimVarValues}
 # Função para geração dos valores das variáveis e das colheitas para cada
 # área informada.
@@ -161,7 +162,7 @@ setSimVarValues <- function (harvests, areatype, prodvars, nPhases){
     # aqui eu usei matrizes pq é mais fácil fazer operações matemáticas 
     # nas matrizes
     fases <- matrix(nrow=nPhases, ncol= length(prodvars)+1)
-    colnames(fases) <-  colnames(fases, do.NULL = FALSE, prefix = "variavel_")
+    colnames(fases) <-  colnames(fases, do.NULL = FALSE, prefix = "X_")
     colnames(fases)[length(prodvars)+1] <-  "colheita"
     rownames(fases) <-  rownames(fases, do.NULL = FALSE, prefix = "fase_")
     colheitas[[i]] = fases
@@ -402,8 +403,7 @@ if(length(prodvars)==3){
 }
 ```
 
-
-```{r criaDataFrames} 
+```{r criaDataFrames}
 # A entrada das funções do pacote bnlearn são dataframes, portanto esta função
 # cria os dataframes apartir das listas com os dados gerados nas funções abaixo
 
@@ -426,7 +426,6 @@ criaDataFrames <- function (dados){
 }
 ```
 
-
 ```{r f_minmax}
 # faz a normalização dos dados
 f_minmax <- function(x){
@@ -434,7 +433,6 @@ f_minmax <- function(x){
 }
 
 ```
-
 
 ```{r CriaRedes}
 ### Cria redes pra todas as fases fenológicas da área
@@ -447,17 +445,36 @@ CriaRedes <- function (areaphase, areatype){
   rownames(teste)<-NULL
   
 
-  blacklist = data.frame(from = c("variavel_1","variavel_1",
-                                "variavel_2", "variavel_2",
-                                "variavel_3", "variavel_3",
+  blacklist = data.frame(from = c("X_1","X_1",
+                                "X_2", "X_2",
+                                "X_3", "X_3",
                                 "colheita",  "colheita",  "colheita" ), 
-                       to = c("variavel_2", "variavel_3", #from v1 
-                              "variavel_1", "variavel_3", #from v2
-                              "variavel_1", "variavel_2", #from v3
-                              "variavel_1", "variavel_2", "variavel_3")) #from col
+                       to = c("X_2", "X_3", #from v1 
+                              "X_1", "X_3", #from v2
+                              "X_1", "X_2", #from v3
+                              "X_1", "X_2", "X_3")) #from col
   
-      whitelist_A1 = data.frame(from = c("variavel_1", "variavel_2", "variavel_3"), 
+  # constroi whitelist conforme tipo de área
+  if(areatype == 1){
+      whitelist = data.frame(from = c("X_1", "X_2", "X_3"), 
                             to = c("colheita", "colheita", "colheita"))
+    }else if(areatype == 2){
+      whitelist = data.frame(from = c("X_1"), 
+                            to = c("colheita"))
+    }else if(areatype == 3){
+      whitelist = data.frame(from = c("X_3"), 
+                            to = c("colheita"))
+    }else if(areatype == 4){
+      whitelist = data.frame(from = c("X_1", "X_3"), 
+                            to = c("colheita", "colheita"))
+    }else if(areatype == 5){
+      whitelist = data.frame(from = c("X_2"), 
+                            to = c("colheita"))
+    }else if(areatype == 6){
+      whitelist = data.frame(from = c("X_1"),
+                                        to = c("colheita"))
+    }
+    
       
       
       # hc_dag =      Hill-Climbing COM definicao da topologia da rede
@@ -468,7 +485,7 @@ CriaRedes <- function (areaphase, areatype){
       # Score-based Learning Algorithm
       
       hc_dag <-hc(treino, 
-                  whitelist = whitelist_A1,
+                  whitelist = whitelist,
                   blacklist = blacklist,
                   debug = FALSE)
       plot(hc_dag)
@@ -480,7 +497,7 @@ CriaRedes <- function (areaphase, areatype){
       # Hybrid Learning Algorithm
       
       mmhc_dag <- mmhc(treino, 
-                         whitelist = whitelist_A1,
+                         whitelist = whitelist,
                          blacklist = blacklist,
                          debug = FALSE)
       plot(mmhc_dag)
@@ -500,7 +517,6 @@ CriaRedes <- function (areaphase, areatype){
       return(validaRede(teste, treino, hc_dag_fitted, hc_dag_raw_fitted, mmhc_dag_fitted, mmhc_dag_raw_fitted))
 }
 ```
-
 
 ```{r validaRede}
 validaRede <- function(test, train, dag_fitted1, dag_fitted2, dag_fitted3, dag_fitted4) {
@@ -563,7 +579,6 @@ validaRede <- function(test, train, dag_fitted1, dag_fitted2, dag_fitted3, dag_f
 }
 ```
 
-
 ```{r rodaRede}
 rodaRede <- function(areadf, areatype){
   area <- list()
@@ -571,7 +586,7 @@ rodaRede <- function(areadf, areatype){
   nome <- array()
   inome=1
   for(fase in 1:length(areadf)){
-    area[[fase]] <- CriaRedes(areas[[1]][[fase]], areatype)
+    area[[fase]] <- CriaRedes(areadf[[fase]], areatype)
     
     out <- bind_rows(out, area[[fase]][3])
     nome[inome] <- paste("fase", fase, "hc_dag")
@@ -595,13 +610,12 @@ rodaRede <- function(areadf, areatype){
 
 ```
 
-
 #### testes
 
 ```{r iniciaTeste}
 iniciaTeste <- function(){
   file_path = "/home/gui/TCC/R/meu_pacote/teste1.csv"
-  nHarvests = 100
+  nHarvests = 1000
   nphases = 5
   nAreas = 2
   nVars = 3
@@ -609,6 +623,7 @@ iniciaTeste <- function(){
   class_names <- c("B", "M", "A")
 # listas para armazenar os dados por área
   areas_list  = list()
+  areas_list_disc  = list()
   areas_list  = BuildSimulationData(nHarvests, nphases)
 
 #para cada área, cria uma lista de dataframes
@@ -616,88 +631,222 @@ iniciaTeste <- function(){
   for(area in 1:length(areas_list)){
     areas_list[area] = criaDataFrames(areas_list[area])
   }
-  
-  
-    for(area in  1:length(areas_list)){#para cada área
+   areas_list_disc = areas_list
+  #return(areas_list)
+
+    for(area in 1:length(areas_list)){#para cada área
       for(fase in 1:length(areas_list[[1]])){#para cada fase da área
-        areas_list[[area]][[fase]] <- discretize(areas_list[[area]][[fase]], 
+        areas_list_disc[[area]][[fase]] <- discretize(areas_list[[area]][[fase]],
                                                  #idisc = 'interval',
                                                  ordered = FALSE,
-                                                 method = 'hartemink', 
+                                                 method = 'hartemink',
                                                  ibreaks = length(class_names)*5,
                                                  breaks = length(class_names))
         for(var in 1:dim(areas_list[[1]][[fase]])[2]){#para cada variável da área/fase
-          levels(areas_list[[area]][[fase]][,var]) <- class_names
+          levels(areas_list_disc[[area]][[fase]][,var]) <- class_names
         }
       }
-    }  
-  return(areas_list)
+    }
+  return(c(areas_list, areas_list_disc))
 }
 ```
 
-
-```{r TESTE} 
+```{r TESTE}
 areas <- iniciaTeste()
-summary(areas[[1]][[1]])
+areas_raw <- areas[1:(length(areas)/2)]
+areas_dis <- areas[((length(areas)/2)+1):length(areas)]
 
-area1 <- rodaRede(areas[[1]], 1)
+summary(areas_dis[[1]][[1]])
+areas_dis[[1]][[1]]
 
+area1 <- rodaRede(areas_dis[[1]], 1)
+write.csv(area1, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area1.csv")
+
+grep("\\bfase 1\\b", row.names(area1), fixed = FALSE, value = TRUE)
+
+select(area1, accuracy)[grep("\\bfase 1\\b", row.names(area1), fixed = FALSE, value = FALSE),]
 select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 1\\b", row.names(area1), fixed = FALSE, value = FALSE),]
 select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 2\\b", row.names(area1), fixed = FALSE, value = FALSE),]
 select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 3\\b", row.names(area1), fixed = FALSE, value = FALSE),]
 select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area1), fixed = FALSE, value = FALSE),]
 select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area1), fixed = FALSE, value = FALSE),]
 
-write.csv(area1, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area1.csv")
+##gerando gráfico
 
-area2 <- rodaRede(areas[[2]], 2)
+area1$redes <- rep(c("hc_dag", "hc_dag_raw", "mmhc_dag", "mmhc_dag_raw"), each = 1)
+area1$periodo <- rep(c("fase 1", "fase 2", "fase 3", "fase 4", "fase 5"), each = 4)
+area1$periodo <- factor(area1$periodo, levels = c("fase 1", "fase 2", "fase 3", "fase 4", "fase 5"))
+area1
 
-select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 1\\b", row.names(area2), fixed = FALSE, value = FALSE),]
-select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 2\\b", row.names(area2), fixed = FALSE, value = FALSE),]
-select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 3\\b", row.names(area2), fixed = FALSE, value = FALSE),]
-select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area2), fixed = FALSE, value = FALSE),]
-select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area2), fixed = FALSE, value = FALSE),]
+png("/home/gui/TCC/R/meu_pacote/saidas/grafico.png", width = 1024, height = 768)
 
+plot(ggplot(area1, aes(periodo, accuracy, fill = redes)) +
+  scale_y_continuous(limits = c(0,100), breaks = seq(0,100,25)) +
+     
+  labs(
+    title = "Acurácia de Redes Estáticas por fase",
+    subtitle = "Área 1",
+    caption = "Fonte: Autor(2022)"
+  )+
+    #https://ggplot2.tidyverse.org/reference/scale_brewer.html
+  scale_fill_brewer(palette = "Spectral") + # Spectral; Paired; Set3
+  geom_col(position = "dodge", show.legend = TRUE, linetype = 1, alpha = .65) +
+  geom_text(aes(label = accuracy),
+            vjust = 1, position = position_dodge(.9),
+            size = 3, color = "black")+
+   geom_hline(yintercept = mean(area1$accuracy), linetype = "solid", size = .1)
+)
+
+
+dev.off()
+
+
+area2 <- rodaRede(areas_dis[[2]], 2)
 write.csv(area2, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area2.csv")
 
-area3 <- rodaRede(areas[[3]], 3)
+select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 1\\\\b", row.names(area2), fixed = FALSE, value = FALSE),]
+select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 2\\\\b", row.names(area2), fixed = FALSE, value = FALSE),]
+select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 3\\\\b", row.names(area2), fixed = FALSE, value = FALSE),]
+select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area2), fixed = FALSE, value = FALSE),]
+select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area2), fixed = FALSE, value = FALSE),]
 
-select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 1\\b", row.names(area3), fixed = FALSE, value = FALSE),]
-select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 2\\b", row.names(area3), fixed = FALSE, value = FALSE),]
-select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 3\\b", row.names(area3), fixed = FALSE, value = FALSE),]
-select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area3), fixed = FALSE, value = FALSE),]
-select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area3), fixed = FALSE, value = FALSE),]
+
+area3 <- rodaRede(areas_dis[[3]], 3)
+
+select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 1\\\\b", row.names(area3), fixed = FALSE, value = FALSE),]
+select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 2\\\\b", row.names(area3), fixed = FALSE, value = FALSE),]
+select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 3\\\\b", row.names(area3), fixed = FALSE, value = FALSE),]
+select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area3), fixed = FALSE, value = FALSE),]
+select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area3), fixed = FALSE, value = FALSE),]
 
 write.csv(area3, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area3.csv")
 
-area4 <- rodaRede(areas[[4]], 4)
+area4 <- rodaRede(areas_dis[[4]], 4)
 
-select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 1\\b", row.names(area4), fixed = FALSE, value = FALSE),]
-select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 2\\b", row.names(area4), fixed = FALSE, value = FALSE),]
-select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 3\\b", row.names(area4), fixed = FALSE, value = FALSE),]
-select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area4), fixed = FALSE, value = FALSE),]
-select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area4), fixed = FALSE, value = FALSE),]
+select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 1\\\\b", row.names(area4), fixed = FALSE, value = FALSE),]
+select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 2\\\\b", row.names(area4), fixed = FALSE, value = FALSE),]
+select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 3\\\\b", row.names(area4), fixed = FALSE, value = FALSE),]
+select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area4), fixed = FALSE, value = FALSE),]
+select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area4), fixed = FALSE, value = FALSE),]
 
 write.csv(area4, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area4.csv")
 
-area5 <- rodaRede(areas[[5]], 5)
+area5 <- rodaRede(areas_dis[[5]], 5)
 
-select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 1\\b", row.names(area5), fixed = FALSE, value = FALSE),]
-select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 2\\b", row.names(area5), fixed = FALSE, value = FALSE),]
-select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 3\\b", row.names(area5), fixed = FALSE, value = FALSE),]
-select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area5), fixed = FALSE, value = FALSE),]
-select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area5), fixed = FALSE, value = FALSE),]
+select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 1\\\\b", row.names(area5), fixed = FALSE, value = FALSE),]
+select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 2\\\\b", row.names(area5), fixed = FALSE, value = FALSE),]
+select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 3\\\\b", row.names(area5), fixed = FALSE, value = FALSE),]
+select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area5), fixed = FALSE, value = FALSE),]
+select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area5), fixed = FALSE, value = FALSE),]
 
 write.csv(area5, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area5.csv")
 
-area6 <- rodaRede(areas[[6]], 6)
+area6 <- rodaRede(areas_dis[[6]], 6)
 
-select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 1\\b", row.names(area6), fixed = FALSE, value = FALSE),]
-select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 2\\b", row.names(area6), fixed = FALSE, value = FALSE),]
-select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 3\\b", row.names(area6), fixed = FALSE, value = FALSE),]
-select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area6), fixed = FALSE, value = FALSE),]
-select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area6), fixed = FALSE, value = FALSE),]
+select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 1\\\\b", row.names(area6), fixed = FALSE, value = FALSE),]
+select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 2\\\\b", row.names(area6), fixed = FALSE, value = FALSE),]
+select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 3\\\\b", row.names(area6), fixed = FALSE, value = FALSE),]
+select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area6), fixed = FALSE, value = FALSE),]
+select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area6), fixed = FALSE, value = FALSE),]
 
 write.csv(area6, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area6.csv")
 
 ```
+
+```{r experiencias_dbnR}
+
+## zona de testes 
+  
+  todas_fases_pre <- data.frame(X_1 = c(1,2,3,4,5), 
+                               X_2 = c(1,2,3,4,5),
+                               X_3 = c(1,2,3,4,5),
+                               colheita  = c(1,2,3,4,5))
+  
+  f_todas_fases_pre <- fold_dt(todas_fases_pre, 5)
+  
+  todas_fases_pre_p <-matrix(0, nrow = 1000, ncol = 20)
+  todas_fases_pre_p <- as.data.frame(todas_fases_pre_p)
+  colnames(todas_fases_pre_p) <- colnames(f_todas_fases_pre)
+  colnames(todas_fases_pre_p)
+  todas_fases_pre_p
+  
+  todas_fases_pre_p[,1:4] = areas_raw[[1]][[5]]
+  todas_fases_pre_p[,5:8] = areas_raw[[1]][[4]]
+  todas_fases_pre_p[,9:12] = areas_raw[[1]][[3]]
+  todas_fases_pre_p[,13:16] = areas_raw[[1]][[2]]
+  todas_fases_pre_p[,17:20] = areas_raw[[1]][[1]]
+  todas_fases_pre_p
+  
+  todas_fases_pre_p <- as.data.table(todas_fases_pre_p)
+  
+#Valid methods are: dmmhc, psoho, natPsoho
+# dmmhc: Error in bnlearn::node.ordering(structure): the graph is only partially directed.
+  natPsoho_f_dt_net <- learn_dbn_struc(dt = todas_fases_pre_p, 
+                              size = 5, 
+                              f_dt = todas_fases_pre_p,
+                              method = "natPsoho")
+  
+  plot(natPsoho_f_dt_net)
+  print(natPsoho_f_dt_net)
+  fitted_natPsoho_f_dt_net <- fit_dbn_params(natPsoho_f_dt_net, todas_fases_pre_p)
+  natPsoho_predict_dt<- forecast_ts(todas_fases_pre_p, fitted_natPsoho_f_dt_net,
+                                      obj_vars = "colheita_t_0", rep = 2, mode = "exact",
+                                      ini = 1, len = 10, print_res = T, plot_res = F)
+  natPsoho_predict_dt
+  
+  
+  
+## teste disponível no repositório do pacote dbnR
+  
+    #   
+    # data(motor)
+    #   dt <- motor
+    #   size = 5
+    #   dt_train <- dt[1:500]
+    #   dt_train
+    #   dt_test <- dt[501:1000]
+    #   f_dt_train <- fold_dt(dt_train, size)
+    #   f_dt_test <- fold_dt(dt_test, size)
+    #   
+    #   f_dt_test
+    # 
+    #   
+    #   net <- learn_dbn_struc(dt_train, size = size)
+    #   net
+    #   fit <- fit_dbn_params(net, f_dt_train)
+    #   plot(fit)
+    #   
+    #   res_fore <- forecast_ts(f_dt_test, fit, obj_vars = "pm_t_0", rep = 2,
+    #                           ini = 1, len = 50, print_res = F, plot_res = F)
+    #   
+    #   res_fore
+    #   
+
+
+## fim zona de testes
+```
+
+```{r teste_novo dbnR}
+teste_novo <- rbind(areas_raw[[1]][[5]][1,], 
+                      areas_raw[[1]][[4]][1,],
+                      areas_raw[[1]][[3]][1,], 
+                      areas_raw[[1]][[2]][1,],
+                      areas_raw[[1]][[1]][1,])
+
+
+  teste_novo_f <- fold_dt(teste_novo, 5)
+  colnames(teste_novo_f)
+
+  natPsoho_teste_novo <- learn_dbn_struc(dt = teste_novo,
+                              size = 5,
+                              f_dt = teste_novo_f,
+                              method = "natPsoho")
+  plot(natPsoho_teste_novo)
+  fit_natPsoho_teste_novo <- fit_dbn_params(natPsoho_teste_novo, teste_novo_f)
+  predict_teste_novo<- forecast_ts(teste_novo_f, fit_natPsoho_teste_novo,
+                                      obj_vars = "colheita_t_0", rep = 2, mode = "exact",
+                                      ini = 1, len = 1, print_res = T, plot_res = F)
+  predict_teste_novo
+```
+
+
