@@ -19,8 +19,8 @@ source('bnlearn_discrete_multivar_prediction_eval.R')
 set.seed(101) 
 library(dbnR)
 library(data.table)
+library(caret)
 #library(rbmn)
-#library(caret)
 ```
 
 ```{r BuildSimulationData}
@@ -29,8 +29,8 @@ BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
   
   areasList <- list()
   if(is.null(nAreas)){
-    # por padrão gera-se 6 áreas
-    # cada área tem uma relação entre as variáveis e a produção 
+# por padrão gera-se 6 áreas
+# cada área tem uma relação entre as variáveis e a produção 
     
     areanames = c("Area_1", "Area_2", "Area_3", "Area_4", "Area_5", "Area_6")
     areatype  = c(1,2,3,4,5,6)
@@ -38,7 +38,7 @@ BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
       areasList[[i]] <- c(areanames =  areanames[i], areatype  = areatype[i])
     }
   }else{
-    # se for definido o número de áreas, os tipos são atribuidos aleatóriamente
+# se for definido o número de áreas, os tipos são atribuidos aleatóriamente
     for (i in 1 : nAreas){
       tempType = sample(1:6, 1)
       #tempType = 5
@@ -47,10 +47,9 @@ BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
     }
   }
   
-  # definição das variáveis pela funcao defVars 
+# definição das variáveis pela funcao defVars 
   defProdVariables = defVars(...)
  
-  
   completeSimValues = list()
   namesArea = array(dim = length(areasList))
   
@@ -65,30 +64,8 @@ BuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
     namesArea[a] = paste("Area", a, "type", areasList[[a]][2], sep = "_")
   }
   names(completeSimValues) = namesArea
-
-  # Normalizando (entre 0 e 1) dados da produção 
-    # DUVIDA: é a abordagem mais correta. (??)
-  #      
-  # temp <- array(dim = length(areasList))
-  # i=1
-  # for(a in 1 : length(areasList)){
-  #   for(h in 1 : nHarvests){
-  #     temp[i] <- completeSimValues[[a]][[h]][1,length(defProdVariables)+1]
-  #     i=1+i
-  #   }
-  # }
-  # 
-  # i=1
-  # temp <- f_minmax(temp)
-  # for(a in 1 : length(areasList)){
-  #   for(h in 1 : nHarvests){
-  #     completeSimValues[[a]][[h]][,length(defProdVariables)+1] <- temp[i]
-  #     i=1+i
-  #   }
-  # }
-  # 
-  return (completeSimValues)
   
+  return (completeSimValues)
 }
 ```
 
@@ -101,7 +78,7 @@ defVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
 
   # Se não for definido o número de variáveis o padrão são as 3 abaixo  
   if(is.null(n_var)){
-    # Definição das variáveis: nome, valor mínimo, valor máximo, tipo 
+# Definição das variáveis: nome, valor mínimo, valor máximo, tipo 
     # type (up=1,osc=2,const=3)
     prodVariables[[1]] = c("PrecAcum",0,1,1)
     prodVariables[[2]] = c("Insol",0,1,2)
@@ -110,8 +87,8 @@ defVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
   return (prodVariables)
   }else
     if(!is.null(type_var) | !is.null(name_var)){
-      # sendo informado o n de variáveis e o nome e o comportamento delas
-      # as variáveis são geradas conforme abaixo:
+# sendo informado o n de variáveis e o nome e o comportamento delas
+# as variáveis são geradas conforme abaixo:
       if(length(type_var)!= n_var | length(name_var)!= n_var){
         stop("parâmetros incorretos. Se informados, tipos e nomes de variáveis devem ser informados para todas as variáveis")
       }else{
@@ -126,8 +103,8 @@ defVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
       }
         return (prodVariables)
         }else{
-          # Sendo informado o n de variáveis, sem mais detalhes a geração 
-          # ocorre de maneira aleatória, conforme abaixo:
+# Sendo informado o n de variáveis, sem mais detalhes a geração 
+# ocorre de maneira aleatória, conforme abaixo:
           for (i in 1 : n_var){
             tempType = sample(1:3, 1)
             tempName <- paste("x", i, sep = "_" )
@@ -155,12 +132,12 @@ setSimVarValues <- function (harvests, areatype, prodvars, nPhases){
   
   # define os nomes das variáveis 
   for(i in 1: harvests){
-  # pra cada colheita da área
-    # cria uma matriz de 'numero de fases' linhas e
-    # 'numero de variáveis' colunas 
-    # (sendo a v pridução nvariaveis independente +1)
-    # aqui eu usei matrizes pq é mais fácil fazer operações matemáticas 
-    # nas matrizes
+# pra cada colheita da área
+  # cria uma matriz de 'numero de fases' linhas e
+  # 'numero de variáveis' colunas 
+  # (sendo a v pridução nvariaveis independente +1)
+  # aqui eu usei matrizes pq é mais fácil fazer operações matemáticas 
+  # nas matrizes
     fases <- matrix(nrow=nPhases, ncol= length(prodvars)+1)
     colnames(fases) <-  colnames(fases, do.NULL = FALSE, prefix = "X_")
     colnames(fases)[length(prodvars)+1] <-  "colheita"
@@ -170,7 +147,7 @@ setSimVarValues <- function (harvests, areatype, prodvars, nPhases){
   }
   names(colheitas) = names_colheitas
   
-  # gera os valores das variáveis independentes
+# gera os valores das variáveis independentes
   for (var in 1 : length(prodvars)){# pra cada vaiável 
     for (harv in 1:harvests) {# pra cada colheita
       random_value   = runif(1, 
@@ -188,7 +165,8 @@ setSimVarValues <- function (harvests, areatype, prodvars, nPhases){
             v_value = random_value
           }else
             if (prodvars[[var]][4]==3){
-              v_value = const_value
+# ADICIONANDO RUIDO À VARIÁVEL X3 PARA NÃO INTERFERIR NO APRENDIZADO DA REDE
+              v_value = const_value + rnorm(1, 0, .15)
             }
         
         colheitas[[harv]][pha,var] = v_value
@@ -201,15 +179,15 @@ setSimVarValues <- function (harvests, areatype, prodvars, nPhases){
 
 # Normalizando (entre 0 e 1 ou 1- e 1, conforme o tipo de variável) 
 # dos dados das variáves antes de calcular os valores de produção  
-       # DUVIDA: é a abordagem mais correta. (??)
+  # DUVIDA: é a abordagem mais correta. (??)
   
 for(h in 1 : harvests){
   for(v in 1 : length(prodvars)){
     if(max(abs(colheitas[[h]][,v])) > 1){
       colheitas[[h]][,v] = f_minmax(colheitas[[h]][,v])
       
-      # corrige valores extremos 0 e 1, adicionando/subtraindo
-      # um valor aleatório na 3ª casa depois da vírgula
+# corrige valores extremos 0 e 1, adicionando/subtraindo
+# um valor aleatório na 3ª casa depois da vírgula
       colheitas[[h]][which.max(colheitas[[h]][,v]),v] = max(colheitas[[h]][,v]) - runif(1)/100
       colheitas[[h]][which.min(colheitas[[h]][,v]),v] = min(colheitas[[h]][,v]) + runif(1)/100
  
@@ -224,40 +202,41 @@ for(h in 1 : harvests){
 if(length(prodvars)==3){
 #  print('AQUI')
  
-  # Área 1: o peso de produção varia linearmente com os valores de todas as variáveis 
-  # nas duas primeiras fases fenológicas
-  # Prod = (X11 + X12 + X21 + X22 + X31 + X32)
+# Área 1: o peso de produção varia linearmente com os valores de todas as variáveis 
+# nas duas primeiras fases fenológicas
+# Prod = (X11 + X12 + X21 + X22 + X31 + X32)
   if (areatype == 1) {
     
     for (h in 1: harvests){
-      # cada colheita recebe o somatório de cada linha (fase) 
-      # length(prodvars) é a quantidade de variáveis independentes
-      # lembrando que 'colheitas' é uma lista de matrizes, daí
-      # colheitas[[h]][,1:length(prodvars)] é:
-        # colheitas[[h]] a matriz da colheita h
-        # [,1:length(prodvars)] pra todas as linas da coluna 1 até a penultima
-        # a última -- [,length(prodvars)+1] -- é onde fica a var 'colheita'
-      colheitas[[h]][,length(prodvars)+1] = sum(colheitas[[h]][,1:length(prodvars)])
+# cada colheita recebe o somatório de cada linha (fase) 
+# length(prodvars) é a quantidade de variáveis independentes
+# lembrando que 'colheitas' é uma lista de matrizes, daí
+# colheitas[[h]][,1:length(prodvars)] é:
+  # colheitas[[h]] a matriz da colheita h
+  # [,1:length(prodvars)] pra todas as linas da coluna 1 até a penultima
+  # a última -- [,length(prodvars)+1] -- é onde fica a var 'colheita'
+      colheitas[[h]][,length(prodvars)+1] = 
+        sum(colheitas[[h]][,1:length(prodvars)])
     }
   }
    
-  # Área 2: o peso de produção varia com o quadrado de X1
-  # Prod = (X11^2 + X12^2 + X13^2 + X14^2 + X15^2)
+# Área 2: o peso de produção varia com o quadrado de X1
+# Prod = (X11^2 + X12^2 + X13^2 + X14^2 + X15^2)
   else if (areatype == 2) { 
     for(h in 1:harvests) {
         colheitas[[h]][,length(prodvars)+1] = sum((colheitas[[h]][,1])^2)
     }
   }
   
-  # Área 3: o peso de produção varia com o quadrado de X3
+# Área 3: o peso de produção varia com o quadrado de X3
   else if (areatype == 3) {
      for(h in 1:harvests) {
         colheitas[[h]][,length(prodvars)+1] = sum((colheitas[[h]][,3])^2)
     }
   }
   
-  # Área 4: o peso de produção é inversamente proporcional à soma de X1 com X3
-  # Prod = 1/(X11+X13) + 1/(...)
+# Área 4: o peso de produção é inversamente proporcional à soma de X1 com X3
+# Prod = 1/(X11+X13) + 1/(...)
   else if (areatype == 4) {
     for(h in 1:harvests) {
        producaoPhase = 0
@@ -269,8 +248,8 @@ if(length(prodvars)==3){
     }
   }
   
-  # Área 5: o peso da produção decresce com uma ponderação dos valores de X2:
-  # Prod = 1* X21 + 0,8* X22 + 0,6*X23 + 0,4*X24 + 0,2*X25
+# Área 5: o peso da produção decresce com uma ponderação dos valores de X2:
+# Prod = 1* X21 + 0,8* X22 + 0,6*X23 + 0,4*X24 + 0,2*X25
   else if (areatype == 5) {
     for(h in 1:harvests) {
        producaoPhase = 0
@@ -283,8 +262,8 @@ if(length(prodvars)==3){
     }
   }
   
-  # Área 6: o peso da produção cresce com uma ponderação dos valores de X1:
-  # Prod = 0,2*X11 + 0,4* X12 + 0,6*X13 + 0,8*X14 + 1*X15
+# Área 6: o peso da produção cresce com uma ponderação dos valores de X1:
+# Prod = 0,2*X11 + 0,4* X12 + 0,6*X13 + 0,8*X14 + 1*X15
   else if (areatype == 6){
     for(h in 1:harvests) {
       producaoPhase = 0
@@ -300,9 +279,9 @@ if(length(prodvars)==3){
 
 #  print('ALI')
   
-  # Área 1: o peso de produção varia linearmente com os valores
-  # de todas as variáveis nas duas primeiras fases fenológicas
-  # Prod = (X11 + X12 + X21 + X22 + X31 + X32)
+# Área 1: o peso de produção varia linearmente com os valores
+# de todas as variáveis nas duas primeiras fases fenológicas
+# Prod = (X11 + X12 + X21 + X22 + X31 + X32)
 
   if (areatype == 1) {
     for (h in 1: harvests){
@@ -310,8 +289,8 @@ if(length(prodvars)==3){
     }
   }
   
-  # Área 2: o peso de produção varia com o quadrado das variáveis impares 
-  # Prod = Σ(Xi1^2 + Xi2^2 + Xi3^2 + Xi4^2 + Xi5^2) | i=(2k+1), k(0:infinito)
+# Área 2: o peso de produção varia com o quadrado das variáveis impares 
+# Prod = Σ(Xi1^2 + Xi2^2 + Xi3^2 + Xi4^2 + Xi5^2) | i=(2k+1), k(0:infinito)
   else if (areatype == 2) { 
     for(h in 1:harvests) {
         producaoVar = 0
@@ -324,8 +303,8 @@ if(length(prodvars)==3){
     }
   }
   
-  # Área 3: o peso de produção varia com o quadrado das variáveis pares
-  # Prod = Σ(Xi1^2 + Xi2^2 + Xi3^2 + Xi4^2 + Xi5^2) | i=(2k), k(0:infinito)
+# Área 3: o peso de produção varia com o quadrado das variáveis pares
+# Prod = Σ(Xi1^2 + Xi2^2 + Xi3^2 + Xi4^2 + Xi5^2) | i=(2k), k(0:infinito)
   else if (areatype == 3){
     for(h in 1:harvests) {
       producaoVar = 0
@@ -338,8 +317,8 @@ if(length(prodvars)==3){
     }
   }
   
-  # Área 4: o peso de produção é inversamente proporcional à soma das variáveis impares
-  # Prod = 1/(X11+X13) + 1/(...)
+# Área 4: o peso de produção é inversamente proporcional à soma das variáveis impares
+# Prod = 1/(X11+X13) + 1/(...)
   else if (areatype == 4) {
     for(h in 1:harvests) {
        producaoPhase = 0
@@ -357,8 +336,8 @@ if(length(prodvars)==3){
     }
   }
   
-  # Área 5: o peso da produção decresce com uma ponderação da soma das variáveis ímpares 
-  # Prod = 1* X21 + 0,8* X22 + 0,6*X23 + 0,4*X24 + 0,2*X25
+# Área 5: o peso da produção decresce com uma ponderação da soma das variáveis ímpares 
+# Prod = 1* X21 + 0,8* X22 + 0,6*X23 + 0,4*X24 + 0,2*X25
   else if (areatype == 5) {
     for(h in 1:harvests) {
       for(p in 1:nPhases){
@@ -377,8 +356,8 @@ if(length(prodvars)==3){
     }
   }
   
-  # Área 6: o peso da produção cresce com uma ponderação dos valores das variáveis pares:
-  # Prod = 0,2*X11 + 0,4* X12 + 0,6*X13 + 0,8*X14 + 1*X15
+# Área 6: o peso da produção cresce com uma ponderação dos valores das variáveis pares:
+# Prod = 0,2*X11 + 0,4* X12 + 0,6*X13 + 0,8*X14 + 1*X15
   else if (areatype == 6) {
     for(h in 1:harvests) {
       for(p in 1:nPhases){
@@ -397,8 +376,7 @@ if(length(prodvars)==3){
     }
   }
 }#fim else
-       
-
+  
   return(colheitas)
 }
 ```
@@ -429,14 +407,48 @@ criaDataFrames <- function (dados){
 ```{r f_minmax}
 # faz a normalização dos dados
 f_minmax <- function(x){
-  return((x - min(x))/(max(x)-min(x)))
+  minmax = (max(x)-min(x))
+  if(minmax==0){
+    return(min(x))
+  }
+  return((x - min(x))/minmax)
 }
 
 ```
 
-```{r CriaRedes}
+```{r geraGraph}
+geraGraph <-function(areaN, file, subtitulo){
+  areaN$redes <- rep(c("hc_dag", "hc_dag_raw", "mmhc_dag", "mmhc_dag_raw"),
+                     each = 1)
+  areaN$periodo <- rep(c("fase 1", "fase 2", "fase 3", "fase 4", "fase 5"), 
+                       each = 4)
+  areaN$periodo <- factor(area1$periodo, levels = 
+                            c("fase 1", "fase 2", "fase 3", "fase 4", "fase 5"))
+  png(file, width = 1024, height = 768)
+  
+  plot(ggplot(areaN, aes(periodo, accuracy, fill = redes)) +
+         scale_y_continuous(limits = c(0,100), breaks = seq(0,100,25)) +
+         labs(
+           title = "Acurácia de Redes Estáticas por fase",
+           subtitle = subtitulo,
+           caption = "Fonte: Autor(2022)"
+  )+
+    scale_fill_brewer(palette = "Spectral") + # Spectral; Paired; Set3
+    geom_col(position = "dodge", show.legend = TRUE, linetype = 1, alpha = .65) +
+    geom_text(aes(label = accuracy), vjust = 1, 
+              position = position_dodge(.9),
+              size = 3, color = "black")+
+    geom_hline(yintercept = mean(areaN$accuracy),
+               linetype = "solid", 
+               size = .1))
+
+dev.off()
+}
+```
+
+```{r criaRedes}
 ### Cria redes pra todas as fases fenológicas da área
-CriaRedes <- function (areaphase, areatype){
+criaRedes <- function (areaphase, areatype){
 
   sample = sample.split(areaphase, SplitRatio = 0.75)
   treino = subset(areaphase, sample == TRUE, )
@@ -454,7 +466,7 @@ CriaRedes <- function (areaphase, areatype){
                               "X_1", "X_2", #from v3
                               "X_1", "X_2", "X_3")) #from col
   
-  # constroi whitelist conforme tipo de área
+# constroi whitelist conforme tipo de área
   if(areatype == 1){
       whitelist = data.frame(from = c("X_1", "X_2", "X_3"), 
                             to = c("colheita", "colheita", "colheita"))
@@ -477,12 +489,12 @@ CriaRedes <- function (areaphase, areatype){
     
       
       
-      # hc_dag =      Hill-Climbing COM definicao da topologia da rede
-      # hc_dag_raw =  Hill-Climbing SEM definicao da topologia da rede
-      # mmhc_dag =      Max-Min Hill-Climbing COM definicao da topologia da rede
-      # mmhc_dag_raw =  Max-Min Hill-Climbing SEM definicao da topologia da rede
-      
-      # Score-based Learning Algorithm
+# hc_dag =      Hill-Climbing COM definicao da topologia da rede
+# hc_dag_raw =  Hill-Climbing SEM definicao da topologia da rede
+# mmhc_dag =      Max-Min Hill-Climbing COM definicao da topologia da rede
+# mmhc_dag_raw =  Max-Min Hill-Climbing SEM definicao da topologia da rede
+
+# Score-based Learning Algorithm
       
       hc_dag <-hc(treino, 
                   whitelist = whitelist,
@@ -494,7 +506,7 @@ CriaRedes <- function (areaphase, areatype){
       plot(hc_dag_raw)
       
      
-      # Hybrid Learning Algorithm
+# Hybrid Learning Algorithm
       
       mmhc_dag <- mmhc(treino, 
                          whitelist = whitelist,
@@ -505,7 +517,7 @@ CriaRedes <- function (areaphase, areatype){
       mmhc_dag_raw <- mmhc(treino, debug = FALSE)
       plot(mmhc_dag_raw)
       
-      # treina redes 
+# treina redes 
       hc_dag_fitted = bn.fit(hc_dag, treino)
       hc_dag_raw_fitted = bn.fit(hc_dag_raw, treino)
 
@@ -513,7 +525,7 @@ CriaRedes <- function (areaphase, areatype){
       mmhc_dag_raw_fitted = bn.fit(mmhc_dag_raw, treino)
 
       
-      # validacao das redes
+# validacao das redes
       return(validaRede(teste, treino, hc_dag_fitted, hc_dag_raw_fitted, mmhc_dag_fitted, mmhc_dag_raw_fitted))
 }
 ```
@@ -586,7 +598,7 @@ rodaRede <- function(areadf, areatype){
   nome <- array()
   inome=1
   for(fase in 1:length(areadf)){
-    area[[fase]] <- CriaRedes(areadf[[fase]], areatype)
+    area[[fase]] <- criaRedes(areadf[[fase]], areatype)
     
     out <- bind_rows(out, area[[fase]][3])
     nome[inome] <- paste("fase", fase, "hc_dag")
@@ -610,8 +622,106 @@ rodaRede <- function(areadf, areatype){
 
 ```
 
-#### testes
+```{r criaRedesDinamc}
+criaRedesDinamc <- function(area){
+ # area <- list()
+ # area <- areas_raw[[1]]
 
+  temp <- area[[length(area)]]
+  nvar <- dim(temp)[2]
+  size <- length(area)
+# CRIA O DF EXPANDIDO COM O N DE CORTES DE TEMPO DESEJADOS PARA A REDE DINÂMICA
+  df_fold <- fold_dt(temp, size)
+  linhasdf <- dim(df_fold)[1]
+  
+# PREENCHENDO DF EXPANDIDO COM VALORES DA FASES DA AREA
+  inc <- 1
+  for(fase in size:1){
+    df_fold[,(((nvar*inc)-nvar)+1):(nvar*inc)] <- 
+      area[[fase]][1:linhasdf,]
+    inc <- inc+1
+  }
+# ADICIONANDO GRANDE RUIDO NAS COLUNAS COLHEITAS 
+# PARA QUE NÃO AFETEM O APRENDIZADO DA REDE
+
+    for(i in 2:(size)){
+     df_fold[,nvar*i] <- df_fold[,nvar*i] +
+       matrix(rnorm(dim(df_fold)[1], 0, 200), ncol = 1)
+    }
+  
+## SEPARAR EM TREINO E TESTE
+  
+  spliter <- array(0, dim(df_fold)[1])
+  sampleDBN = sample.split(spliter, SplitRatio = 0.75)
+  treinoDBN = subset(df_fold, sampleDBN == TRUE, )
+  rownames(treinoDBN)<-NULL
+  testeDBN  = subset(df_fold, sampleDBN == FALSE)
+  rownames(testeDBN)<-NULL
+  
+# APRENDENDO A DBN
+  
+   # dag_dbn <- learn_dbn_struc(dt = treinoDBN,
+   #                            size = size,
+   #                            f_dt = treinoDBN,
+   #                            method = "natPsoho")
+   
+   dag_dbn_2 <- learn_dbn_struc(dt = NULL,
+                                size = size,
+                                f_dt = treinoDBN,
+                                method = "dmmhc",
+                                intra = F)
+   
+# CASO EXISTA, REMOVER ARCOS PARTINDO DOS NÓS 'colheita_t'
+   
+   # # https://link.springer.com/chapter/10.1007/978-3-030-86271-8_14
+   # for(i in 1:(size-1)){
+   #    test <-  paste("colheita_t_", i, sep ="")
+   #    if(length(which(arcs(dag_dbn)[,"from"] == test)) > 0){
+   #      linhas <- which(arcs(dag_dbn)[,"from"] == test)
+   #      arcs(dag_dbn) <- arcs(dag_dbn)[-linhas,]
+   #    }
+   # }
+   # 
+   #plot(dag_dbn)
+   
+
+      for(i in 1:(size-1)){
+      test <-  paste("colheita_t_", i, sep ="")
+      if(length(which(arcs(dag_dbn_2)[,"from"] == test)) > 0){
+        linhas <- which(arcs(dag_dbn_2)[,"from"] == test)
+        arcs(dag_dbn_2) <- arcs(dag_dbn_2)[-linhas,]
+      }
+   }
+   
+   # plot(dag_dbn_2)
+   
+   
+      
+# TREINA A REDE 
+   # dag_dbn_fited <- fit_dbn_params(dag_dbn, treinoDBN)
+   dag_dbn_fited_2 <- fit_dbn_params(dag_dbn_2, treinoDBN)
+    
+   # predict_dag_dbn_1 <- forecast_ts(testeDBN, dag_dbn_fited,
+   #                                 obj_vars = "colheita_t_0", rep = 1,
+   #                                 mode = "approx", ini = 1, len = length(testeDBN), 
+   #                                 print_res = T, plot_res = F)
+   
+   predict_dag_dbn_2_a <- forecast_ts(testeDBN, dag_dbn_fited_2,
+                                   obj_vars = "colheita_t_0", rep = 1,
+                                   mode = "approx", ini = 1, len = length(testeDBN),
+                                   print_res = T, plot_res = F)
+   
+   predict_dag_dbn_2_e <- forecast_ts(testeDBN, dag_dbn_fited_2,
+                                   obj_vars = "colheita_t_0", rep = 1,
+                                   mode = "exact", ini = 1, len = length(testeDBN),
+                                   print_res = T, plot_res = F)
+   
+   # return(predict_dag_dbn_1)
+   # return(c(predict_dag_dbn_1, predict_dag_dbn_2))
+}
+```
+
+#### testes
 ```{r iniciaTeste}
 iniciaTeste <- function(){
   file_path = "/home/gui/TCC/R/meu_pacote/teste1.csv"
@@ -625,13 +735,20 @@ iniciaTeste <- function(){
   areas_list  = list()
   areas_list_disc  = list()
   areas_list  = BuildSimulationData(nHarvests, nphases)
+  #areas_list  = BuildSimulationData(nHarvests, nphases, nAreas, 10)
+  
 
 #para cada área, cria uma lista de dataframes
 #cada dataframe tem os dados de uma fase fenológica
   for(area in 1:length(areas_list)){
     areas_list[area] = criaDataFrames(areas_list[area])
+    for(fase in 1:nphases){
+      
+      model <- preProcess(areas_list[[area]][[fase]], method="range")
+     areas_list[[area]][[fase]] <- predict(model, areas_list[[area]][[fase]])
+    }
   }
-   areas_list_disc = areas_list
+    areas_list_disc = areas_list
   #return(areas_list)
 
     for(area in 1:length(areas_list)){#para cada área
@@ -651,202 +768,89 @@ iniciaTeste <- function(){
 }
 ```
 
-```{r TESTE}
+
+```{r Gera dados}
 areas <- iniciaTeste()
 areas_raw <- areas[1:(length(areas)/2)]
 areas_dis <- areas[((length(areas)/2)+1):length(areas)]
+#length(areas_raw[[1]])
+# summary(areas_dis[[1]][[1]])
+# summary(areas_raw[[6]][[1]])
+# areas_dis[[1]][[1]]
+```
 
-summary(areas_dis[[1]][[1]])
-areas_dis[[1]][[1]]
+```{r TESTE - REDES ESTÁTICAS (dblearn)}
 
 area1 <- rodaRede(areas_dis[[1]], 1)
+geraGraph(area1, "/home/gui/TCC/R/meu_pacote/saidas/grafico_ESTATICA_A1.png", "Área 2")
 write.csv(area1, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area1.csv")
 
-grep("\\bfase 1\\b", row.names(area1), fixed = FALSE, value = TRUE)
-
-select(area1, accuracy)[grep("\\bfase 1\\b", row.names(area1), fixed = FALSE, value = FALSE),]
-select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 1\\b", row.names(area1), fixed = FALSE, value = FALSE),]
-select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 2\\b", row.names(area1), fixed = FALSE, value = FALSE),]
-select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 3\\b", row.names(area1), fixed = FALSE, value = FALSE),]
-select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area1), fixed = FALSE, value = FALSE),]
-select(area1, accuracy, accuracyOVA , precisionOVA)[grep("\\bfase 4\\b", row.names(area1), fixed = FALSE, value = FALSE),]
-
-##gerando gráfico
-
-area1$redes <- rep(c("hc_dag", "hc_dag_raw", "mmhc_dag", "mmhc_dag_raw"), each = 1)
-area1$periodo <- rep(c("fase 1", "fase 2", "fase 3", "fase 4", "fase 5"), each = 4)
-area1$periodo <- factor(area1$periodo, levels = c("fase 1", "fase 2", "fase 3", "fase 4", "fase 5"))
-area1
-
-png("/home/gui/TCC/R/meu_pacote/saidas/grafico.png", width = 1024, height = 768)
-
-plot(ggplot(area1, aes(periodo, accuracy, fill = redes)) +
-  scale_y_continuous(limits = c(0,100), breaks = seq(0,100,25)) +
-     
-  labs(
-    title = "Acurácia de Redes Estáticas por fase",
-    subtitle = "Área 1",
-    caption = "Fonte: Autor(2022)"
-  )+
-    #https://ggplot2.tidyverse.org/reference/scale_brewer.html
-  scale_fill_brewer(palette = "Spectral") + # Spectral; Paired; Set3
-  geom_col(position = "dodge", show.legend = TRUE, linetype = 1, alpha = .65) +
-  geom_text(aes(label = accuracy),
-            vjust = 1, position = position_dodge(.9),
-            size = 3, color = "black")+
-   geom_hline(yintercept = mean(area1$accuracy), linetype = "solid", size = .1)
-)
-
-
-dev.off()
-
-
 area2 <- rodaRede(areas_dis[[2]], 2)
+geraGraph(area2, "/home/gui/TCC/R/meu_pacote/saidas/grafico_ESTATICA_A2.png", "Área 2")
 write.csv(area2, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area2.csv")
 
-select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 1\\\\b", row.names(area2), fixed = FALSE, value = FALSE),]
-select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 2\\\\b", row.names(area2), fixed = FALSE, value = FALSE),]
-select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 3\\\\b", row.names(area2), fixed = FALSE, value = FALSE),]
-select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area2), fixed = FALSE, value = FALSE),]
-select(area2, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area2), fixed = FALSE, value = FALSE),]
-
-
 area3 <- rodaRede(areas_dis[[3]], 3)
-
-select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 1\\\\b", row.names(area3), fixed = FALSE, value = FALSE),]
-select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 2\\\\b", row.names(area3), fixed = FALSE, value = FALSE),]
-select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 3\\\\b", row.names(area3), fixed = FALSE, value = FALSE),]
-select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area3), fixed = FALSE, value = FALSE),]
-select(area3, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area3), fixed = FALSE, value = FALSE),]
-
+geraGraph(area3, "/home/gui/TCC/R/meu_pacote/saidas/grafico_ESTATICA_A3.png", "Área 3")
 write.csv(area3, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area3.csv")
 
 area4 <- rodaRede(areas_dis[[4]], 4)
-
-select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 1\\\\b", row.names(area4), fixed = FALSE, value = FALSE),]
-select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 2\\\\b", row.names(area4), fixed = FALSE, value = FALSE),]
-select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 3\\\\b", row.names(area4), fixed = FALSE, value = FALSE),]
-select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area4), fixed = FALSE, value = FALSE),]
-select(area4, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area4), fixed = FALSE, value = FALSE),]
-
+geraGraph(area4, "/home/gui/TCC/R/meu_pacote/saidas/grafico_ESTATICA_A4.png", "Área 4")
 write.csv(area4, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area4.csv")
 
 area5 <- rodaRede(areas_dis[[5]], 5)
-
-select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 1\\\\b", row.names(area5), fixed = FALSE, value = FALSE),]
-select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 2\\\\b", row.names(area5), fixed = FALSE, value = FALSE),]
-select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 3\\\\b", row.names(area5), fixed = FALSE, value = FALSE),]
-select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area5), fixed = FALSE, value = FALSE),]
-select(area5, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area5), fixed = FALSE, value = FALSE),]
-
+geraGraph(area5, "/home/gui/TCC/R/meu_pacote/saidas/grafico_ESTATICA_A5.png", "Área 5")
 write.csv(area5, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area5.csv")
 
 area6 <- rodaRede(areas_dis[[6]], 6)
-
-select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 1\\\\b", row.names(area6), fixed = FALSE, value = FALSE),]
-select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 2\\\\b", row.names(area6), fixed = FALSE, value = FALSE),]
-select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 3\\\\b", row.names(area6), fixed = FALSE, value = FALSE),]
-select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area6), fixed = FALSE, value = FALSE),]
-select(area6, accuracy, accuracyOVA , precisionOVA)[grep("\\\\bfase 4\\\\b", row.names(area6), fixed = FALSE, value = FALSE),]
-
+geraGraph(area6, "/home/gui/TCC/R/meu_pacote/saidas/grafico_ESTATICA_A6.png", "Área 6")
 write.csv(area6, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area6.csv")
-
 ```
 
-```{r experiencias_dbnR}
+```{r TESTE - REDES DINAMICAS}
 
-## zona de testes 
-  
-  todas_fases_pre <- data.frame(X_1 = c(1,2,3,4,5), 
-                               X_2 = c(1,2,3,4,5),
-                               X_3 = c(1,2,3,4,5),
-                               colheita  = c(1,2,3,4,5))
-  
-  f_todas_fases_pre <- fold_dt(todas_fases_pre, 5)
-  
-  todas_fases_pre_p <-matrix(0, nrow = 1000, ncol = 20)
-  todas_fases_pre_p <- as.data.frame(todas_fases_pre_p)
-  colnames(todas_fases_pre_p) <- colnames(f_todas_fases_pre)
-  colnames(todas_fases_pre_p)
-  todas_fases_pre_p
-  
-  todas_fases_pre_p[,1:4] = areas_raw[[1]][[5]]
-  todas_fases_pre_p[,5:8] = areas_raw[[1]][[4]]
-  todas_fases_pre_p[,9:12] = areas_raw[[1]][[3]]
-  todas_fases_pre_p[,13:16] = areas_raw[[1]][[2]]
-  todas_fases_pre_p[,17:20] = areas_raw[[1]][[1]]
-  todas_fases_pre_p
-  
-  todas_fases_pre_p <- as.data.table(todas_fases_pre_p)
-  
-#Valid methods are: dmmhc, psoho, natPsoho
-# dmmhc: Error in bnlearn::node.ordering(structure): the graph is only partially directed.
-  natPsoho_f_dt_net <- learn_dbn_struc(dt = todas_fases_pre_p, 
-                              size = 5, 
-                              f_dt = todas_fases_pre_p,
-                              method = "natPsoho")
-  
-  plot(natPsoho_f_dt_net)
-  print(natPsoho_f_dt_net)
-  fitted_natPsoho_f_dt_net <- fit_dbn_params(natPsoho_f_dt_net, todas_fases_pre_p)
-  natPsoho_predict_dt<- forecast_ts(todas_fases_pre_p, fitted_natPsoho_f_dt_net,
-                                      obj_vars = "colheita_t_0", rep = 2, mode = "exact",
-                                      ini = 1, len = 10, print_res = T, plot_res = F)
-  natPsoho_predict_dt
-  
-  
-  
-## teste disponível no repositório do pacote dbnR
-  
-    #   
-    # data(motor)
-    #   dt <- motor
-    #   size = 5
-    #   dt_train <- dt[1:500]
-    #   dt_train
-    #   dt_test <- dt[501:1000]
-    #   f_dt_train <- fold_dt(dt_train, size)
-    #   f_dt_test <- fold_dt(dt_test, size)
-    #   
-    #   f_dt_test
-    # 
-    #   
-    #   net <- learn_dbn_struc(dt_train, size = size)
-    #   net
-    #   fit <- fit_dbn_params(net, f_dt_train)
-    #   plot(fit)
-    #   
-    #   res_fore <- forecast_ts(f_dt_test, fit, obj_vars = "pm_t_0", rep = 2,
-    #                           ini = 1, len = 50, print_res = F, plot_res = F)
-    #   
-    #   res_fore
-    #   
+criaRedesDinamc(areas_raw[[1]]) 
+#natPsoho
+  # The average MAE per execution is: colheita_t_0: 0.2448 # approx
+  # The average MAE per execution is: colheita_t_0:  0.259 # exact
+#dmmhc:
+  # The average MAE per execution is: colheita_t_0: 0.192 # approx
+  # The average MAE per execution is: colheita_t_0: 0.195 # exact
+
+criaRedesDinamc(areas_raw[[2]])
+#natPsoho
+  # The average MAE per execution is: colheita_t_0: 0.195 # approx
+  # The average MAE per execution is: colheita_t_0: 0.168 # exact
+#dmmhc:
+  # The average MAE per execution is: colheita_t_0: 0.297 # approx
+  # The average MAE per execution is: colheita_t_0: 0.297 # exact
+criaRedesDinamc(areas_raw[[3]]) 
+# The average MAE per execution is: colheita_t_0: 0.216 # approx
+# The average MAE per execution is: colheita_t_0: 0.278 # exact
+criaRedesDinamc(areas_raw[[4]]) 
+# The average MAE per execution is: colheita_t_0: 0.0058 # approx
+# The average MAE per execution is: colheita_t_0: 0.0111 # exact
+criaRedesDinamc(areas_raw[[5]]) 
+# The average MAE per execution is: colheita_t_0: 0.106 # approx
+# The average MAE per execution is: colheita_t_0: 0.2092 # exact
+criaRedesDinamc(areas_raw[[6]]) 
+# The average MAE per execution is: colheita_t_0: 0.252 # approx
+# The average MAE per execution is: colheita_t_0: 0.2083 # exact
+
+## GERANDO GRÁFICOS:
+
+graficoDBN <- data.frame(Area_1 = c(0.244, 0.259),
+                         Area_2 = c(0.195, 0.168),
+                         Area_3 = c(0.216, 0.278),
+                         Area_4 = c(0.005, 0.0111),
+                         Area_5 = c(0.106, 0.209),
+                         Area_6 = c(0.252, 0.208),
+                         row.names = c("approx", "exact"))
+
+## AFF UMA HORA QUEBRANDO A CABEÇA PRA GERAR ESSE GRÁFICO AQUI 
+## E FIZ EM 3 MIN  NO LIBREOFFICE CALC
+    #/home/gui/TCC/R/meu_pacote/saidas
 
 
-## fim zona de testes
+    
 ```
-
-```{r teste_novo dbnR}
-teste_novo <- rbind(areas_raw[[1]][[5]][1,], 
-                      areas_raw[[1]][[4]][1,],
-                      areas_raw[[1]][[3]][1,], 
-                      areas_raw[[1]][[2]][1,],
-                      areas_raw[[1]][[1]][1,])
-
-
-  teste_novo_f <- fold_dt(teste_novo, 5)
-  colnames(teste_novo_f)
-
-  natPsoho_teste_novo <- learn_dbn_struc(dt = teste_novo,
-                              size = 5,
-                              f_dt = teste_novo_f,
-                              method = "natPsoho")
-  plot(natPsoho_teste_novo)
-  fit_natPsoho_teste_novo <- fit_dbn_params(natPsoho_teste_novo, teste_novo_f)
-  predict_teste_novo<- forecast_ts(teste_novo_f, fit_natPsoho_teste_novo,
-                                      obj_vars = "colheita_t_0", rep = 2, mode = "exact",
-                                      ini = 1, len = 1, print_res = T, plot_res = F)
-  predict_teste_novo
-```
-
 
