@@ -177,20 +177,20 @@ setSimVarValues <- function (harvests, areatype, prodvars, nPhases){
     }#for harv in 1:harvests
   }#for var in 1 : length(prodvars)
 
-# Normalizando (entre 0 e 1 ou 1- e 1, conforme o tipo de variável) 
-# dos dados das variáves antes de calcular os valores de produção  
+# Normalizando (entre 0 e 1 ou 1- e 1, conforme o tipo de variável)
+# dos dados das variáves antes de calcular os valores de produção
   # DUVIDA: é a abordagem mais correta. (??)
-  
+
 for(h in 1 : harvests){
   for(v in 1 : length(prodvars)){
     if(max(abs(colheitas[[h]][,v])) > 1){
       colheitas[[h]][,v] = f_minmax(colheitas[[h]][,v])
-      
+
 # corrige valores extremos 0 e 1, adicionando/subtraindo
 # um valor aleatório na 3ª casa depois da vírgula
       colheitas[[h]][which.max(colheitas[[h]][,v]),v] = max(colheitas[[h]][,v]) - runif(1)/100
       colheitas[[h]][which.min(colheitas[[h]][,v]),v] = min(colheitas[[h]][,v]) + runif(1)/100
- 
+
      }
   }
 }
@@ -418,29 +418,53 @@ f_minmax <- function(x){
 
 ```{r geraGraph}
 geraGraph <-function(areaN, file, subtitulo){
+  
+  text_size <- 20
+  
   areaN$redes <- rep(c("hc_dag", "hc_dag_raw", "mmhc_dag", "mmhc_dag_raw"),
                      each = 1)
   areaN$periodo <- rep(c("fase 1", "fase 2", "fase 3", "fase 4", "fase 5"), 
                        each = 4)
-  areaN$periodo <- factor(area1$periodo, levels = 
+  areaN$periodo <- factor(areaN$periodo, levels = 
                             c("fase 1", "fase 2", "fase 3", "fase 4", "fase 5"))
   png(file, width = 1024, height = 768)
   
-  plot(ggplot(areaN, aes(periodo, accuracy, fill = redes)) +
-         scale_y_continuous(limits = c(0,100), breaks = seq(0,100,25)) +
-         labs(
-           title = "Acurácia de Redes Estáticas por fase",
-           subtitle = subtitulo,
-           caption = "Fonte: Autor(2022)"
-  )+
-    scale_fill_brewer(palette = "Spectral") + # Spectral; Paired; Set3
-    geom_col(position = "dodge", show.legend = TRUE, linetype = 1, alpha = .65) +
-    geom_text(aes(label = accuracy), vjust = 1, 
-              position = position_dodge(.9),
-              size = 3, color = "black")+
+  plot(
+    ggplot(areaN, aes(periodo, accuracy, fill = redes)) +
+      scale_y_continuous(limits = c(0,100), breaks = seq(0,100,25)) +
+       labs(
+         # title = "Acurácia de Redes Estáticas por fase",
+         subtitle = subtitulo
+         # caption = "Fonte: Autor(2022)"
+         )+
+      scale_fill_brewer(palette = "Spectral") + # Spectral; Paired; Set3
+      geom_col(position = "dodge", 
+                show.legend = TRUE, linetype = 1, alpha = .65) +
+      geom_text(aes(label = accuracy), vjust = 1,
+                 position = position_dodge(.9),
+                 size = 5, color = "black")+
+       theme(axis.ticks.length = unit(.3, "cm"),
+             axis.text = element_text(size = text_size, colour = "black"),
+             axis.title = element_text(size = text_size, colour = "black"),
+             axis.ticks = element_line(colour = "black"),
+             panel.border = element_rect(colour = "black",
+                                         fill = NA, size = 0.5),
+             legend.position="bottom",
+             legend.text = element_text(colour="black", 
+                                        size=text_size, face="bold"),
+
+             legend.title =  element_text(colour="black", 
+                                          size=text_size, face="bold"),
+
+             plot.title.position = "panel",
+             plot.caption.position = "panel",
+             title = element_text(colour="black", 
+                                        size=text_size, face="bold")
+          # panel.grid =  element_blank()
+          )+
     geom_hline(yintercept = mean(areaN$accuracy),
                linetype = "solid", 
-               size = .1))
+               size = .2))
 
 dev.off()
 }
@@ -682,7 +706,6 @@ criaRedesDinamc <- function(area){
    #    }
    # }
    # 
-   #plot(dag_dbn)
    
 
       for(i in 1:(size-1)){
@@ -692,7 +715,8 @@ criaRedesDinamc <- function(area){
         arcs(dag_dbn_2) <- arcs(dag_dbn_2)[-linhas,]
       }
    }
-   
+   #plot(dag_dbn)
+   #geraIMGgraph(dag_dbn_2, file)
    # plot(dag_dbn_2)
    
    
@@ -717,9 +741,11 @@ criaRedesDinamc <- function(area){
                                    print_res = T, plot_res = F)
    
    # return(predict_dag_dbn_1)
+   return(dag_dbn_2)
    # return(c(predict_dag_dbn_1, predict_dag_dbn_2))
 }
 ```
+
 
 #### testes
 ```{r iniciaTeste}
@@ -745,7 +771,7 @@ iniciaTeste <- function(){
     for(fase in 1:nphases){
       
       model <- preProcess(areas_list[[area]][[fase]], method="range")
-     areas_list[[area]][[fase]] <- predict(model, areas_list[[area]][[fase]])
+      areas_list[[area]][[fase]] <- predict(model, areas_list[[area]][[fase]])
     }
   }
     areas_list_disc = areas_list
@@ -766,23 +792,19 @@ iniciaTeste <- function(){
     }
   return(c(areas_list, areas_list_disc))
 }
-```
 
-
-```{r Gera dados}
+##  Gera dados
 areas <- iniciaTeste()
 areas_raw <- areas[1:(length(areas)/2)]
 areas_dis <- areas[((length(areas)/2)+1):length(areas)]
-#length(areas_raw[[1]])
-# summary(areas_dis[[1]][[1]])
-# summary(areas_raw[[6]][[1]])
-# areas_dis[[1]][[1]]
+
+areas_raw[[5]]
 ```
 
 ```{r TESTE - REDES ESTÁTICAS (dblearn)}
 
 area1 <- rodaRede(areas_dis[[1]], 1)
-geraGraph(area1, "/home/gui/TCC/R/meu_pacote/saidas/grafico_ESTATICA_A1.png", "Área 2")
+geraGraph(area1, "/home/gui/TCC/R/meu_pacote/saidas/grafico_ESTATICA_A1.png", "Área 1")
 write.csv(area1, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area1.csv")
 
 area2 <- rodaRede(areas_dis[[2]], 2)
@@ -808,7 +830,9 @@ write.csv(area6, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area6.csv")
 
 ```{r TESTE - REDES DINAMICAS}
 
-criaRedesDinamc(areas_raw[[1]]) 
+x <- criaRedesDinamc(areas_raw[[1]])
+# DAG_dinamica_A1.png  
+plot(x)
 #natPsoho
   # The average MAE per execution is: colheita_t_0: 0.2448 # approx
   # The average MAE per execution is: colheita_t_0:  0.259 # exact
