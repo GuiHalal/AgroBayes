@@ -794,6 +794,9 @@ iniciaTeste <- function(){
 }
 
 ##  Gera dados
+## GERA O CONJUNTO DE DADOS DUAS VEZES, 
+##   SENDO A 1ª METADE OS DADOS "CRUS" (areas_raw)
+##   E NA SEGUNDA METADE OS DADOS DISCRETIZADOS areas_dis
 areas <- iniciaTeste()
 areas_raw <- areas[1:(length(areas)/2)]
 areas_dis <- areas[((length(areas)/2)+1):length(areas)]
