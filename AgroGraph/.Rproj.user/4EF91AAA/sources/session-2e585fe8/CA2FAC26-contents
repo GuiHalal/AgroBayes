@@ -1,0 +1,79 @@
+
+
+# RASCUNHO do RASCUNHO:
+  
+  
+#summary(areas_teste[[5]][[1]])
+
+# PROXIMA TAREFA É CORRIGIR A FUNÇÃO 'CriaRedes'
+  #for(area in 1:nAreas){ 
+   # dags[[area]] <- CriaRedes(areas[area]) 
+  #}
+
+whitelist = data.frame(from = c("variavel_1", "variavel_2", "variavel_3"), to = c("colheita", "colheita", "colheita"))
+whitelistA6 = data.frame(from = c("variavel_1"), to = c("colheita"))
+
+blacklist = data.frame(from = c("variavel_1","variavel_1",
+                                "variavel_2", "variavel_2",
+                                "variavel_3", "variavel_3",
+                                "colheita",  "colheita",  "colheita" ), 
+                       to = c("variavel_2", "variavel_3", #from v1 
+                              "variavel_1", "variavel_3", #from v2
+                              "variavel_1", "variavel_2", #from v3
+                              "variavel_1", "variavel_2", "variavel_3")) #from col
+ arc_set = as.matrix(whitelist)
+  ####  manual_dag ####
+
+  manual_dag = empty.graph(nodes =  c("variavel_1", "variavel_2", "variavel_3", "colheita"))
+  arc_set = as.matrix(whitelist)
+  arcs(manual_dag) = arc_set
+  plot(manual_dag)
+  bn_manual_dag = bn.fit(manual_dag, areas_teste[[1]][[1]])
+  validaRede(areas_teste, bn_manual_dag)
+  score(manual_dag, areas_teste[[1]][[1]], by.node = FALSE, debug = FALSE)
+  
+  #### Hill climbing ###
+  areas_teste <- iniciaTeste()
+  #hc_dag <-hc(areas_teste[[1]][[1]], manual_dag)
+  hc_dag <-hc(areas_teste[[1]][[1]], debug = FALSE)#, whitelist = whitelistA6, blacklist = blacklist)
+  #blacklist(hc_dag)
+  plot(hc_dag) 
+  bn_hc_dag = bn.fit(hc_dag, areas_teste[[1]][[1]])
+  bn_hc_dag[[4]]
+  summary(areas_teste[[1]][[1]])
+  cpdist(bn_hc_dag, nodes = c("colheita"), evidence = c("variavel_3" > 0.92510, "variavel_2" > 0.92510))
+
+validaRede(areas_teste, bn_hc_dag)
+  score(hc_dag, areas_teste[[6]][[5]], by.node = FALSE, debug = FALSE)
+  
+  
+  #### Tabu ####
+  
+  tabu_dag <-tabu(areas_teste[[1]][[1]], tabu = 10, debug = TRUE)
+  plot(tabu_dag) 
+  bn_tabu_dag = bn.fit(tabu_dag, areas_teste[[1]][[1]])
+  bn_tabu_dag[[4]]
+  validaRede(areas_teste, bn_tabu_dag)
+  score(tabu_dag, areas_teste[[1]][[1]], by.node = FALSE, debug = FALSE)
+  
+  mmhc_dag_1 <- mmhc(areas_teste[[1]][[5]], whitelist = whitelist, blacklist = blacklist, debug = FALSE)
+  #mmhc_dag_1 <- mmhc(areas_teste[[1]][[1]], whitelist = whitelist, blacklist = blacklist, debug = FALSE)
+  plot(mmhc_dag_1)
+  bn_mmhc = bn.fit(mmhc_dag_1, areas_teste[[1]][[1]])
+  bn_mmhc[[4]] 
+  validaRede(areas_teste, bn_mmhc)
+  score(mmhc_dag_1, areas_teste[[1]][[1]], by.node = FALSE, debug = FALSE)
+  
+  
+  pc.stable_dag_1 <- pc.stable(areas_teste[[1]][[1]], whitelist = whitelist, blacklist = blacklist, test = NULL, 
+                    alpha = 0.05, B = NULL, max.sx = NULL, debug = FALSE, undirected = FALSE)
+  plot(pc.stable_dag_1)
+  bn_pc.stable_dag_1 = bn.fit(pc.stable_dag_1, areas_teste[[1]][[1]])
+  bn_pc.stable_dag_1[[4]] 
+  validaRede(areas_teste, bn_pc.stable_dag_1)
+
+
+bn = bn.fit(pc.stable_dag_1, areas_teste[[1]][[1]]) 
+bn 
+
+

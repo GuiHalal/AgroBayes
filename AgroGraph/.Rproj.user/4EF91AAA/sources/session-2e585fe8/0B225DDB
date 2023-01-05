@@ -1,0 +1,26 @@
+{
+    "id": "0B225DDB",
+    "path": "~/TCC/R/meu_pacote/tcc-coding_-/AgroGraph/R/data_gen.R",
+    "project_path": "R/data_gen.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1672852098023.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "360,0",
+        "scrollLine": "0"
+    },
+    "folds": "0|74|42|0|\n44|69|87|0|\n89|68|341|0|\n343|35|359|0|\n",
+    "lastKnownWriteTime": 1672852330,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1672852330142,
+    "read_only": false,
+    "read_only_alternatives": []
+}
