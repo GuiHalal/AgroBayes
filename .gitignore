@@ -4,3 +4,4 @@
 *.log
 *.tex
 *.pdf
+.Rproj.user
