@@ -2,20 +2,32 @@
 % Please edit documentation in R/create_bn_test.R
 \name{createNetworksTest}
 \alias{createNetworksTest}
-\title{Creates, from a dataframes, four Bayesian networks for performance evaluation}
+\title{TEST FUNCTION -  Creates Bayesian networks for performance evaluation}
 \usage{
 createNetworksTest(areaphase, areatype)
 }
 \arguments{
-\item{areaphase}{the data.frame to be used}
+\item{areaphase}{the dataframe to be used.}
 
-\item{areatype}{integer to identify which type of area the dataframe belongs to}
+\item{areatype}{integer to identify which type
+of area the dataframe belongs to.}
+}
+\value{
+Network evaluation metrics,
+as calculated in the \code{\link{validateNetworkTest}} function.
 }
 \description{
-From n crops data of a phenological phase in a expecific area in the cropfield,
-four
-A partir de dados de colheitas de uma fase fenológica da cultivar, de uma área
-especícica da plantação, são geradas  (utilizando as funções  bnlearn::hc e
-bnlearn::mmhc), treinadas (utilizando bnlearn::bn.fit) e
-avaliadas quanto a performance (validaRede()) quatro redes bayesianas
+Using harvest data from a phenological phase of the cultivar,
+from a specific area of the plantation, Bayesian network are generated
+(using the \code{bnlearn::hc} and \code{bnlearn::mmhc} functions),
+trained (using the \code{bnlearn::bn.fit} function)
+and evaluated for performance (using \code{\link{validateNetworkTest}}).
+Four networks are created, two from the pre-established topology and
+two learned only from the presented data.
 }
+\examples{
+\donttest{
+areaphase <- data.frame(area1_phase_1)
+metricsArea1Phase1 <- createNetworksTest (areaphase, 1)}
+}
+\keyword{internal}

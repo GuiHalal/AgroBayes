@@ -1,14 +1,73 @@
-#'Creates, from a dataframes, four Bayesian networks for performance evaluation
 #'
-#'From n crops data of a phenological phase in a expecific area in the cropfield,
-#'four
-#'A partir de dados de colheitas de uma fase fenológica da cultivar, de uma área
-#'especícica da plantação, são geradas  (utilizando as funções  bnlearn::hc e
-#'bnlearn::mmhc), treinadas (utilizando bnlearn::bn.fit) e
-#'avaliadas quanto a performance (validaRede()) quatro redes bayesianas
+#' TEST FUNCTION - Executes \code{\link{createNetworksTest}} function to an area
 #'
-#' @param areaphase the data.frame to be used
-#' @param areatype integer to identify which type of area the dataframe belongs to
+#' Executes the \code{\link{createNetworksTest}} function for all phenological
+#' phases of an area. It also organizes the generated metrics in a dataframe.
+#'
+#' @param arealist list os dataframes of all phenological phase on
+#' a specific area of the plantation
+#' @param areatype integer to identify which type of area
+#' the dataframe belongs to
+#' @return A dataframe organizing the network metrics generated in the
+#' \code{\link{runNetworksTest}} function. The lines represent the network
+#' performance learned in each phenological phase of the area (\code{arealist})
+#' @examples
+#' \donttest{
+#' arealist <- list(area1)
+#' metricsArea1 <- createNetworks (arealist, 1)}
+#' @keywords internal
+#' @export
+#'
+runNetworksTest <- function(arealist, areatype){
+  area <- list()
+  out <- data.frame()
+  name <- array()
+  iname=1
+  for(phase in 1:length(arealist)){
+    area[[phase]] <- createNetworksTest(arealist[[phase]], areatype)
+
+    out <- dplyr::bind_rows(out, area[[phase]][3])
+    name[iname] <- paste("phase", phase, "hc_dag")
+    iname = iname+1
+
+    out <- dplyr::bind_rows(out, area[[phase]][6])
+    name[iname] <- paste("phase", phase, "hc_dag_raw")
+    iname = iname+1
+
+    out <- dplyr::bind_rows(out, area[[phase]][9])
+    name[iname] <- paste("phase", phase, "mmhc_dag")
+    iname = iname+1
+
+    out <- dplyr::bind_rows(out, area[[phase]][12])
+    name[iname] <- paste("phase", phase, "mmhc_dag_raw")
+    iname = iname+1
+  }
+  row.names(out$eval)<-name
+  return(out$eval)
+}
+
+#'
+#' TEST FUNCTION -  Creates Bayesian networks for performance evaluation
+#'
+#' Using harvest data from a phenological phase of the cultivar,
+#' from a specific area of the plantation, Bayesian network are generated
+#' (using the \code{bnlearn::hc} and \code{bnlearn::mmhc} functions),
+#' trained (using the \code{bnlearn::bn.fit} function)
+#' and evaluated for performance (using \code{\link{validateNetworkTest}}).
+#' Four networks are created, two from the pre-established topology and
+#' two learned only from the presented data.
+#'
+#' @param areaphase the dataframe to be used.
+#' @param areatype integer to identify which type
+#' of area the dataframe belongs to.
+#' @return Network evaluation metrics,
+#' as calculated in the \code{\link{validateNetworkTest}} function.
+#' @examples
+#' \donttest{
+#' areaphase <- data.frame(area1_phase_1)
+#' metricsArea1Phase1 <- createNetworksTest (areaphase, 1)}
+#' @keywords internal
+#' @export
 
 createNetworksTest <- function (areaphase, areatype){
 
@@ -26,7 +85,7 @@ createNetworksTest <- function (areaphase, areatype){
                          to = c("X_2", "X_3", #from v1
                                 "X_1", "X_3", #from v2
                                 "X_1", "X_2", #from v3
-                                "X_1", "X_2", "X_3")) #from col
+                                "X_1", "X_2", "X_3")) #from harvest
 
   # builds whitelist according to area type
   if(areatype == 1){
@@ -93,33 +152,32 @@ createNetworksTest <- function (areaphase, areatype){
                              mmhc_dag_raw_fitted))
 }
 
-runNetworksTest <- function(areadf, areatype){
-  area <- list()
-  out <- data.frame()
-  name <- array()
-  iname=1
-  for(phase in 1:length(areadf)){
-    area[[phase]] <- createNetworksTest(areadf[[phase]], areatype)
-
-    out <- dplyr::bind_rows(out, area[[phase]][3])
-    name[iname] <- paste("phase", phase, "hc_dag")
-    iname = iname+1
-
-    out <- dplyr::bind_rows(out, area[[phase]][6])
-    name[iname] <- paste("phase", phase, "hc_dag_raw")
-    iname = iname+1
-
-    out <- dplyr::bind_rows(out, area[[phase]][9])
-    name[iname] <- paste("phase", phase, "mmhc_dag")
-    iname = iname+1
-
-    out <- dplyr::bind_rows(out, area[[phase]][12])
-    name[iname] <- paste("phase", phase, "mmhc_dag_raw")
-    iname = iname+1
-  }
-  row.names(out$eval)<-name
-  return(out$eval)
-}
+#'
+#' TEST FUNCTION - Generates Bayesian networks performance evaluation
+#'
+#' Using the functions available in the repository
+#' \url{https://github.com/KaikeWesleyReis/bnlearn-multivar-prediction-metrics}
+#' calculates the metrics of the four Bayesian networks generated in
+#' the \code{\link{createNetworksTest}} function when executed in context
+#' of \code{\link{runNetworksTest}} function.
+#'
+#' @param test dataframe to be used to test the Bayesian networks.
+#' It is composed of a 25% portion of the original dataframe presented to
+#' the \code{\link{createNetworksTest}} function.
+#' @param train dataframe to be used to train the Bayesian networks.
+#' It is composed of a 75% portion of the original dataframe presented to
+#' the \code{\link{createNetworksTest}} function.
+#'
+#' @param dag_fitted1 Fitted Bayesian network to be tested
+#' @param dag_fitted2 Fitted Bayesian network to be tested
+#' @param dag_fitted3 Fitted Bayesian network to be tested
+#' @param dag_fitted4 Fitted Bayesian network to be tested
+#'
+#' @return List of values returned from \code{bnMetricsMultiVarPrediction}.
+#' See more in \url{https://github.com/KaikeWesleyReis/bnlearn-multivar-prediction-metrics#bnmetricsmultivarprediction}
+#' @keywords internal
+#' @export
+#'
 
 validateNetworkTest <- function(test, train, dag_fitted1, dag_fitted2, dag_fitted3, dag_fitted4) {
   # Define Target variables (Variables to be predicted)

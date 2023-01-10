@@ -1,10 +1,45 @@
-runNetworks <- function(areadf, areatype){
+#' Executes \code{\link{createNetworks}} function to an area
+#'
+#' Executes the \code{\link{createNetworks}} function for all phenological
+#' phases of an area. It also organizes the generated metrics in a dataframe.
+#'
+#' @param arealist list os dataframes of all phenological phase on
+#' a specific area of the plantation
+#' @param blacklist a dataframe of character string with two columns,
+#' it is passed as a parameter to bnlearn learn functions in order to
+#' avoid these arcs composing the final network
+#' @param whitelist a dataframe of character string with two columns,
+#' it is passed as a parameter to bnlearn learn functions in order to
+#' guarantee these arcs composing the final network
+#' @return A dataframe organizing the network metrics generated in the
+#' \code{\link{createNetworks}} function. The lines represent the network
+#' performance learned in each phenological phase of the area (\code{arealist})
+#' @examples
+#' \donttest{
+#' blacklist = data.frame(
+#' from = c("X_1","X_1",
+#'          "X_2", "X_2",
+#'          "X_3", "X_3",
+#'          "harvest",  "harvest",  "harvest" ),
+#' to = c("X_2", "X_3", #from v1
+#'        "X_1", "X_3", #from v2
+#'        "X_1", "X_2", #from v3
+#'        "X_1", "X_2", "X_3")) #from harvest
+#' whitelist = data.frame(
+#' from = c("X_1", "X_2", "X_3"),
+#' to = c("harvest", "harvest", "harvest"))
+#' arealist <- list(area1)
+#' metricsArea1 <- createNetworks (arealist, blacklist, whitelist)
+#' }
+#' @export
+#'
+runNetworks <- function(arealist, blacklist, whitelist){
   area <- list()
   out <- data.frame()
   name <- array()
   iname=1
-  for(phase in 1:length(areadf)){
-    area[[phase]] <- createNetworks(areadf[[phase]], areatype)
+  for(phase in 1:length(arealist)){
+    area[[phase]] <- createNetworks(arealist[[phase]], blacklist, whitelist)
 
     out <- dplyr::bind_rows(out, area[[phase]][3])
     name[iname] <- paste("phase", phase, "hc_dag")
@@ -26,16 +61,18 @@ runNetworks <- function(areadf, areatype){
   return(out$eval)
 }
 
-#' createNetworks
-#' #' Creates, from a dataframes, four Bayesian networks for performance evaluation
+#'
+#' Creates Bayesian networks for performance evaluation
 #'
 #' Using harvest data from a phenological phase of the cultivar,
 #' from a specific area of the plantation, Bayesian network are generated
-#' (using the bnlearn::hc and bnlearn::mmhc functions),
-#' trained (using the bnlearn::bn.fit function) and evaluated for performance.
+#' (using the \code{bnlearn::hc} and \code{bnlearn::mmhc} functions),
+#' trained (using the \code{bnlearn::bn.fit} function)
+#' and evaluated for performance (using \code{\link{validateNetwork}}).
 #' Four networks are created, two from the pre-established topology and
 #' two learned only from the presented data.
-#' @param areaphase the data.frame to be used
+#'
+#' @param areaphase the dataframe to be used
 #' @param blacklist a dataframe of character string with two columns,
 #' it is passed as a parameter to bnlearn learn functions in order to
 #' avoid these arcs composing the final network
@@ -44,7 +81,24 @@ runNetworks <- function(areadf, areatype){
 #' guarantee these arcs composing the final network
 #' @return Network evaluation metrics,
 #' as calculated in the \code{validateNetwork} function
-#' @keywords internal
+#' @examples
+#' \donttest{
+#' metricsArea1Phase1 = list()
+#' blacklist = data.frame(
+#' from = c("X_1","X_1",
+#'          "X_2", "X_2",
+#'          "X_3", "X_3",
+#'          "harvest",  "harvest",  "harvest" ),
+#' to = c("X_2", "X_3", #from v1
+#'        "X_1", "X_3", #from v2
+#'        "X_1", "X_2", #from v3
+#'        "X_1", "X_2", "X_3")) #from col
+#' whitelist = data.frame(
+#' from = c("X_1", "X_2", "X_3"),
+#' to = c("harvest", "harvest", "harvest"))
+#' areaphase = data.frame(area1_phase_1)
+#' metricsArea1Phase1 = createNetworks (areaphase, blacklist, whitelist)
+#' }
 #' @export
 
 createNetworks <- function (areaphase, blacklist, whitelist){
@@ -97,6 +151,31 @@ createNetworks <- function (areaphase, blacklist, whitelist){
                          mmhc_dag_raw_fitted))
 }
 
+#'
+#' Generates Bayesian networks performance evaluation
+#'
+#' Using the functions available in the repository
+#' \url{https://github.com/KaikeWesleyReis/bnlearn-multivar-prediction-metrics}
+#' calculates the metrics of the four Bayesian networks generated in
+#' the \code{\link{createNetworks}} function when executed in context
+#' of \code{\link{runNetworks}} function.
+#'
+#' @param test dataframe to be used to test the Bayesian networks.
+#' It is composed of a 25% portion of the original dataframe presented to
+#' the \code{\link{createNetworks}} function.
+#' @param train dataframe to be used to train the Bayesian networks.
+#' It is composed of a 75% portion of the original dataframe presented to
+#' the \code{\link{createNetworks}} function.
+#'
+#' @param dag_fitted1 Fitted Bayesian network to be tested
+#' @param dag_fitted2 Fitted Bayesian network to be tested
+#' @param dag_fitted3 Fitted Bayesian network to be tested
+#' @param dag_fitted4 Fitted Bayesian network to be tested
+#'
+#' @return List of values returned from \code{bnMetricsMultiVarPrediction}.
+#' See more in \url{https://github.com/KaikeWesleyReis/bnlearn-multivar-prediction-metrics#bnmetricsmultivarprediction}
+#' @export
+#'
 
 validateNetwork <- function(test, train, dag_fitted1, dag_fitted2, dag_fitted3, dag_fitted4) {
   # Define Target variables (Variables to be predicted)

@@ -2,12 +2,12 @@
 % Please edit documentation in R/create_bn.R
 \name{createNetworks}
 \alias{createNetworks}
-\title{Creates, from a dataframes, four Bayesian networks for performance evaluation}
+\title{Creates Bayesian networks for performance evaluation}
 \usage{
 createNetworks(areaphase, blacklist, whitelist)
 }
 \arguments{
-\item{areaphase}{the data.frame to be used}
+\item{areaphase}{the dataframe to be used}
 
 \item{blacklist}{a dataframe of character string with two columns,
 it is passed as a parameter to bnlearn learn functions in order to
@@ -24,9 +24,28 @@ as calculated in the \code{validateNetwork} function
 \description{
 Using harvest data from a phenological phase of the cultivar,
 from a specific area of the plantation, Bayesian network are generated
-(using the bnlearn::hc and bnlearn::mmhc functions),
-trained (using the bnlearn::bn.fit function) and evaluated for performance.
+(using the \code{bnlearn::hc} and \code{bnlearn::mmhc} functions),
+trained (using the \code{bnlearn::bn.fit} function)
+and evaluated for performance (using \code{\link{validateNetwork}}).
 Four networks are created, two from the pre-established topology and
 two learned only from the presented data.
 }
-\keyword{internal}
+\examples{
+\donttest{
+metricsArea1Phase1 = list()
+blacklist = data.frame(
+from = c("X_1","X_1",
+         "X_2", "X_2",
+         "X_3", "X_3",
+         "harvest",  "harvest",  "harvest" ),
+to = c("X_2", "X_3", #from v1
+       "X_1", "X_3", #from v2
+       "X_1", "X_2", #from v3
+       "X_1", "X_2", "X_3")) #from col
+whitelist = data.frame(
+from = c("X_1", "X_2", "X_3"),
+to = c("harvest", "harvest", "harvest"))
+areaphase = data.frame(area1_phase_1)
+metricsArea1Phase1 = createNetworks (areaphase, blacklist, whitelist)
+}
+}
