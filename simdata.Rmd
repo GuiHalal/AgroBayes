@@ -648,101 +648,132 @@ rodaRede <- function(areadf, areatype){
 
 ```{r criaRedesDinamc}
 criaRedesDinamc <- function(area){
- # area <- list()
- # area <- areas_raw[[1]]
+  # area <- list()
+  # area <- areas_raw[[1]]
+  colnames(area[[1]])[4] = "harvest"
+  colnames(area[[2]])[4] = "harvest"
+  colnames(area[[3]])[4] = "harvest"
+  colnames(area[[4]])[4] = "harvest"
+  colnames(area[[5]])[4] = "harvest"
 
   temp <- area[[length(area)]]
   nvar <- dim(temp)[2]
   size <- length(area)
-# CRIA O DF EXPANDIDO COM O N DE CORTES DE TEMPO DESEJADOS PARA A REDE DINÂMICA
+# Create the expanded df with the n of desired time-cuttings for the D-network
   df_fold <- fold_dt(temp, size)
-  linhasdf <- dim(df_fold)[1]
+  rowsdf <- dim(df_fold)[1]
   
-# PREENCHENDO DF EXPANDIDO COM VALORES DA FASES DA AREA
+# Filling expanded df with area phase values
   inc <- 1
   for(fase in size:1){
     df_fold[,(((nvar*inc)-nvar)+1):(nvar*inc)] <- 
-      area[[fase]][1:linhasdf,]
+      area[[fase]][1:rowsdf,]
     inc <- inc+1
   }
-# ADICIONANDO GRANDE RUIDO NAS COLUNAS COLHEITAS 
-# PARA QUE NÃO AFETEM O APRENDIZADO DA REDE
+# Adding big noise to 'harvest' columns so they do not affect network learning
 
     for(i in 2:(size)){
      df_fold[,nvar*i] <- df_fold[,nvar*i] +
        matrix(rnorm(dim(df_fold)[1], 0, 200), ncol = 1)
     }
   
-## SEPARAR EM TREINO E TESTE
+## Separating into training and test
   
   spliter <- array(0, dim(df_fold)[1])
   sampleDBN = sample.split(spliter, SplitRatio = 0.75)
-  treinoDBN = subset(df_fold, sampleDBN == TRUE, )
-  rownames(treinoDBN)<-NULL
-  testeDBN  = subset(df_fold, sampleDBN == FALSE)
-  rownames(testeDBN)<-NULL
+  trainingDBN = subset(df_fold, sampleDBN == TRUE, )
+  rownames(trainingDBN)<-NULL
+  testDBN  = subset(df_fold, sampleDBN == FALSE)
+  rownames(testDBN)<-NULL
   
-# APRENDENDO A DBN
+# Learning the dbn
   
-   # dag_dbn <- learn_dbn_struc(dt = treinoDBN,
-   #                            size = size,
-   #                            f_dt = treinoDBN,
-   #                            method = "natPsoho")
+  dag_natPsoho <- learn_dbn_struc(dt = trainingDBN,
+                               size = size,
+                               f_dt = trainingDBN,
+                               method = "natPsoho")
    
-   dag_dbn_2 <- learn_dbn_struc(dt = NULL,
+  dag_dmmhc <- learn_dbn_struc(dt = NULL,
                                 size = size,
-                                f_dt = treinoDBN,
+                                f_dt = trainingDBN,
                                 method = "dmmhc",
                                 intra = F)
    
-# CASO EXISTA, REMOVER ARCOS PARTINDO DOS NÓS 'colheita_t'
+# If existing, remove arcs from nodes 'harvest_t'
+  for(i in 1:(size-1)){
+    testing <-  paste("harvest_t_", i, sep ="")
+    if(length(which(arcs(dag_natPsoho)[,"from"] == testing)) > 0){
+      rows <- which(arcs(dag_natPsoho)[,"from"] == testing)
+      arcs(dag_natPsoho) <- arcs(dag_natPsoho)[-rows,]
+    }
+    }
+  
+  for(i in 1:(size-1)){
+    testing <-  paste("harvest_t_", i, sep ="")
+    if(length(which(arcs(dag_dmmhc)[,"from"] == testing)) > 0){
+      rows <- which(arcs(dag_dmmhc)[,"from"] == testing)
+      arcs(dag_dmmhc) <- arcs(dag_dmmhc)[-rows,]
+    }
+    }
    
-   # # https://link.springer.com/chapter/10.1007/978-3-030-86271-8_14
-   # for(i in 1:(size-1)){
-   #    test <-  paste("colheita_t_", i, sep ="")
-   #    if(length(which(arcs(dag_dbn)[,"from"] == test)) > 0){
-   #      linhas <- which(arcs(dag_dbn)[,"from"] == test)
-   #      arcs(dag_dbn) <- arcs(dag_dbn)[-linhas,]
-   #    }
-   # }
-   # 
-   
-
-      for(i in 1:(size-1)){
-      test <-  paste("colheita_t_", i, sep ="")
-      if(length(which(arcs(dag_dbn_2)[,"from"] == test)) > 0){
-        linhas <- which(arcs(dag_dbn_2)[,"from"] == test)
-        arcs(dag_dbn_2) <- arcs(dag_dbn_2)[-linhas,]
-      }
-   }
-   #plot(dag_dbn)
-   #geraIMGgraph(dag_dbn_2, file)
-   # plot(dag_dbn_2)
+  # plot(dag_natPsoho)
+  # plot(dag_dmmhc)
    
    
       
-# TREINA A REDE 
-   # dag_dbn_fited <- fit_dbn_params(dag_dbn, treinoDBN)
-   dag_dbn_fited_2 <- fit_dbn_params(dag_dbn_2, treinoDBN)
-    
-   # predict_dag_dbn_1 <- forecast_ts(testeDBN, dag_dbn_fited,
-   #                                 obj_vars = "colheita_t_0", rep = 1,
-   #                                 mode = "approx", ini = 1, len = length(testeDBN), 
-   #                                 print_res = T, plot_res = F)
-   
-   predict_dag_dbn_2_a <- forecast_ts(testeDBN, dag_dbn_fited_2,
-                                   obj_vars = "colheita_t_0", rep = 1,
-                                   mode = "approx", ini = 1, len = length(testeDBN),
+# Training the network
+  dag_natPsoho_fited <- fit_dbn_params(dag_natPsoho, trainingDBN)
+  
+  dag_dmmhc_fited <- fit_dbn_params(dag_dmmhc, trainingDBN)
+  
+  # dag_natPsoho
+  predict_dag_natPsoho_approx <- forecast_ts(testDBN, dag_natPsoho_fited,
+                                   obj_vars = "harvest_t_0", rep = 1,
+                                   mode = "approx", ini = 1, len = length(testDBN), 
+                                   print_res = T, plot_res = F)
+  
+  predict_dag_natPsoho_exact <- forecast_ts(testDBN, dag_natPsoho_fited,
+                                   obj_vars = "harvest_t_0", rep = 1,
+                                   mode = "exact", ini = 1, len = length(testDBN), 
+                                   print_res = T, plot_res = F)
+  #dag_dmmhc
+  predict_dag_dmmhc_approx <- forecast_ts(testDBN, dag_dmmhc_fited,
+                                   obj_vars = "harvest_t_0", rep = 1,
+                                   mode = "approx", ini = 1, len = length(testDBN),
                                    print_res = T, plot_res = F)
    
-   predict_dag_dbn_2_e <- forecast_ts(testeDBN, dag_dbn_fited_2,
-                                   obj_vars = "colheita_t_0", rep = 1,
-                                   mode = "exact", ini = 1, len = length(testeDBN),
+   predict_dag_dmmhc_exact <- forecast_ts(testDBN, dag_dmmhc_fited,
+                                   obj_vars = "harvest_t_0", rep = 1,
+                                   mode = "exact", ini = 1, len = length(testDBN),
                                    print_res = T, plot_res = F)
    
-   # return(predict_dag_dbn_1)
-   return(dag_dbn_2)
-   # return(c(predict_dag_dbn_1, predict_dag_dbn_2))
+   
+   metrics_df_natPsoho_approx = 
+     data.frame(obs = predict_dag_natPsoho_approx$orig$harvest_t_0,
+                pred = predict_dag_natPsoho_approx$pred$harvest_t_0) 
+   
+   metrics_df_natPsoho_exact = 
+     data.frame(obs = predict_dag_natPsoho_exact$orig$harvest_t_0,
+                pred = predict_dag_natPsoho_exact$pred$harvest_t_0) 
+   
+   metrics_df_dmmhc_approx = 
+     data.frame(obs = predict_dag_dmmhc_approx$orig$harvest_t_0,
+                pred = predict_dag_dmmhc_approx$pred$harvest_t_0) 
+   
+   metrics_df_dmmhc_exact = 
+     data.frame(obs = predict_dag_dmmhc_exact$orig$harvest_t_0,
+                pred = predict_dag_dmmhc_exact$pred$harvest_t_0) 
+   
+   natPsoho_approx =  defaultSummary(metrics_df_natPsoho_approx)
+   natPsoho_exact =  defaultSummary(metrics_df_natPsoho_exact)
+   dmmhc_approx =  defaultSummary(metrics_df_dmmhc_approx)
+   dmmhc_exact =  defaultSummary(metrics_df_dmmhc_exact)
+   
+   metrics_dags = data.frame(rbind(natPsoho_approx, dmmhc_approx, natPsoho_exact, dmmhc_exact))
+   
+   
+   
+   return(metrics_dags)
 }
 ```
 
@@ -808,6 +839,12 @@ areas_raw[[5]]
 saida <- criaRedes(areas_dis[[1]][[1]], 1)
 saida
 area1
+
+x <- criaRedesDinamc(areas_raw[[1]])
+x
+
+plot(x)
+plot(x$RMSE)
 ```
 
 
@@ -840,49 +877,20 @@ write.csv(area6, file = "/home/gui/TCC/R/meu_pacote/saidas/out_area6.csv")
 
 ```{r TESTE - REDES DINAMICAS}
 
-x <- criaRedesDinamc(areas_raw[[1]])
-# DAG_dinamica_A1.png  
-plot(x)
-#natPsoho
-  # The average MAE per execution is: colheita_t_0: 0.2448 # approx
-  # The average MAE per execution is: colheita_t_0:  0.259 # exact
-#dmmhc:
-  # The average MAE per execution is: colheita_t_0: 0.192 # approx
-  # The average MAE per execution is: colheita_t_0: 0.195 # exact
+dinamica_A1 <- criaRedesDinamc(areas_raw[[1]])
 
-criaRedesDinamc(areas_raw[[2]])
-#natPsoho
-  # The average MAE per execution is: colheita_t_0: 0.195 # approx
-  # The average MAE per execution is: colheita_t_0: 0.168 # exact
-#dmmhc:
-  # The average MAE per execution is: colheita_t_0: 0.297 # approx
-  # The average MAE per execution is: colheita_t_0: 0.297 # exact
-criaRedesDinamc(areas_raw[[3]]) 
-# The average MAE per execution is: colheita_t_0: 0.216 # approx
-# The average MAE per execution is: colheita_t_0: 0.278 # exact
-criaRedesDinamc(areas_raw[[4]]) 
-# The average MAE per execution is: colheita_t_0: 0.0058 # approx
-# The average MAE per execution is: colheita_t_0: 0.0111 # exact
-criaRedesDinamc(areas_raw[[5]]) 
-# The average MAE per execution is: colheita_t_0: 0.106 # approx
-# The average MAE per execution is: colheita_t_0: 0.2092 # exact
-criaRedesDinamc(areas_raw[[6]]) 
-# The average MAE per execution is: colheita_t_0: 0.252 # approx
-# The average MAE per execution is: colheita_t_0: 0.2083 # exact
+dinamica_A2 <- criaRedesDinamc(areas_raw[[2]])
+
+dinamica_A3 <- criaRedesDinamc(areas_raw[[3]]) 
+
+dinamica_A4 <- criaRedesDinamc(areas_raw[[4]]) 
+
+dinamica_A5 <- criaRedesDinamc(areas_raw[[5]])
+
+dinamica_A6 <- criaRedesDinamc(areas_raw[[6]]) 
 
 ## GERANDO GRÁFICOS:
 
-graficoDBN <- data.frame(Area_1 = c(0.244, 0.259),
-                         Area_2 = c(0.195, 0.168),
-                         Area_3 = c(0.216, 0.278),
-                         Area_4 = c(0.005, 0.0111),
-                         Area_5 = c(0.106, 0.209),
-                         Area_6 = c(0.252, 0.208),
-                         row.names = c("approx", "exact"))
-
-## AFF UMA HORA QUEBRANDO A CABEÇA PRA GERAR ESSE GRÁFICO AQUI 
-## E FIZ EM 3 MIN  NO LIBREOFFICE CALC
-    #/home/gui/TCC/R/meu_pacote/saidas
 
 
     

@@ -7,7 +7,7 @@
 createNetworks(areaphase, blacklist, whitelist)
 }
 \arguments{
-\item{areaphase}{the dataframe to be used}
+\item{areaphase}{the dataframe of discretized data to be used}
 
 \item{blacklist}{a dataframe of character string with two columns,
 it is passed as a parameter to bnlearn learn functions in order to

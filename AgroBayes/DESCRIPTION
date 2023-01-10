@@ -1,11 +1,21 @@
 Package: AgroBayes
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Generates static and dynamic Bayesian networks for forecasting crop results
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Author: c(
+    person("Afonso Halal", "Guilherme", email = "guilhermehalal@gmail.com", role = c("aut", "cre")),
+    person("Ludtke Ferreira", "Ana Paula", email = "anaferreira@unipampa.edu.br", role = "ctb"))
+Maintainer: Guilherme Halal guilhermehalal@gmail.com
+Description: This package permits, from variables related to agricultural
+    production, to generate static and dynamic Bayesian networks that
+    allow forecasting crop results. The package allows comparing the 
+    effectiveness of models generated from some network structure 
+    learning methods. The networks are generated based on 
+    functions available in the bnlearn (static networks) and 
+    dbnR (dynamic networks) packages. The forecasting of the crop production
+    can be done from sets of data geographically separated 
+    (specific areas of the plantation) 
+    and also from chronological cuts (phenological phases).
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

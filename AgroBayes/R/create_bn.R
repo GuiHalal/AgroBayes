@@ -72,7 +72,7 @@ runNetworks <- function(arealist, blacklist, whitelist){
 #' Four networks are created, two from the pre-established topology and
 #' two learned only from the presented data.
 #'
-#' @param areaphase the dataframe to be used
+#' @param areaphase the dataframe of discretized data to be used
 #' @param blacklist a dataframe of character string with two columns,
 #' it is passed as a parameter to bnlearn learn functions in order to
 #' avoid these arcs composing the final network
