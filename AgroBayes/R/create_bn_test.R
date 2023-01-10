@@ -1,7 +1,7 @@
 #'
-#' TEST FUNCTION - Executes \code{\link{createNetworksTest}} function to an area
+#' TEST FUNCTION - Executes \code{\link{testCreateNetworks}} function to an area
 #'
-#' Executes the \code{\link{createNetworksTest}} function for all phenological
+#' Executes the \code{\link{testCreateNetworks}} function for all phenological
 #' phases of an area. It also organizes the generated metrics in a dataframe.
 #'
 #' @param arealist list os dataframes of all phenological phase on
@@ -9,22 +9,22 @@
 #' @param areatype integer to identify which type of area
 #' the dataframe belongs to
 #' @return A dataframe organizing the network metrics generated in the
-#' \code{\link{runNetworksTest}} function. The lines represent the network
+#' \code{\link{testRunNetworks}} function. The lines represent the network
 #' performance learned in each phenological phase of the area (\code{arealist})
 #' @examples
 #' \donttest{
 #' arealist <- list(area1)
-#' metricsArea1 <- createNetworks (arealist, 1)}
+#' metricsArea1 <- testRunNetworks (arealist, 1)}
 #' @keywords internal
 #' @export
 #'
-runNetworksTest <- function(arealist, areatype){
+testRunNetworks <- function(arealist, areatype){
   area <- list()
   out <- data.frame()
   name <- array()
   iname=1
   for(phase in 1:length(arealist)){
-    area[[phase]] <- createNetworksTest(arealist[[phase]], areatype)
+    area[[phase]] <- testCreateNetworks(arealist[[phase]], areatype)
 
     out <- dplyr::bind_rows(out, area[[phase]][3])
     name[iname] <- paste("phase", phase, "hc_dag")
@@ -53,7 +53,7 @@ runNetworksTest <- function(arealist, areatype){
 #' from a specific area of the plantation, Bayesian network are generated
 #' (using the \code{bnlearn::hc} and \code{bnlearn::mmhc} functions),
 #' trained (using the \code{bnlearn::bn.fit} function)
-#' and evaluated for performance (using \code{\link{validateNetworkTest}}).
+#' and evaluated for performance (using \code{\link{testRunNetworks}}).
 #' Four networks are created, two from the pre-established topology and
 #' two learned only from the presented data.
 #'
@@ -61,15 +61,15 @@ runNetworksTest <- function(arealist, areatype){
 #' @param areatype integer to identify which type
 #' of area the dataframe belongs to.
 #' @return Network evaluation metrics,
-#' as calculated in the \code{\link{validateNetworkTest}} function.
+#' as calculated in the \code{\link{testValidateNetwork}} function.
 #' @examples
 #' \donttest{
 #' areaphase <- data.frame(area1_phase_1)
-#' metricsArea1Phase1 <- createNetworksTest (areaphase, 1)}
+#' metricsArea1Phase1 <- testCreateNetworks (areaphase, 1)}
 #' @keywords internal
 #' @export
 
-createNetworksTest <- function (areaphase, areatype){
+testCreateNetworks <- function (areaphase, areatype){
 
   sample = caTools::sample.split(areaphase, SplitRatio = 0.75)
   training = subset(areaphase, sample == TRUE, )
@@ -147,7 +147,7 @@ createNetworksTest <- function (areaphase, areatype){
 
 
   # validation of networks
-  return(validateNetworkTest(test, training, hc_dag_fitted,
+  return(testValidateNetwork(test, training, hc_dag_fitted,
                              hc_dag_raw_fitted, mmhc_dag_fitted,
                              mmhc_dag_raw_fitted))
 }
@@ -158,15 +158,15 @@ createNetworksTest <- function (areaphase, areatype){
 #' Using the functions available in the repository
 #' \url{https://github.com/KaikeWesleyReis/bnlearn-multivar-prediction-metrics}
 #' calculates the metrics of the four Bayesian networks generated in
-#' the \code{\link{createNetworksTest}} function when executed in context
-#' of \code{\link{runNetworksTest}} function.
+#' the \code{\link{testCreateNetworks}} function when executed in context
+#' of \code{\link{testRunNetworks}} function.
 #'
 #' @param test dataframe to be used to test the Bayesian networks.
 #' It is composed of a 25% portion of the original dataframe presented to
-#' the \code{\link{createNetworksTest}} function.
+#' the \code{\link{testCreateNetworks}} function.
 #' @param train dataframe to be used to train the Bayesian networks.
 #' It is composed of a 75% portion of the original dataframe presented to
-#' the \code{\link{createNetworksTest}} function.
+#' the \code{\link{testCreateNetworks}} function.
 #'
 #' @param dag_fitted1 Fitted Bayesian network to be tested
 #' @param dag_fitted2 Fitted Bayesian network to be tested
@@ -179,7 +179,7 @@ createNetworksTest <- function (areaphase, areatype){
 #' @export
 #'
 
-validateNetworkTest <- function(test, train, dag_fitted1, dag_fitted2, dag_fitted3, dag_fitted4) {
+testValidateNetwork <- function(test, train, dag_fitted1, dag_fitted2, dag_fitted3, dag_fitted4) {
   # Define Target variables (Variables to be predicted)
   pred <-'harvest'
   # Evidence variables
