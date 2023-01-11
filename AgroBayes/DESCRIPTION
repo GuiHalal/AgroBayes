@@ -2,28 +2,15 @@ Package: AgroBayes
 Type: Package
 Title: Generates static and dynamic Bayesian networks for forecasting crop results
 Version: 0.1.0
-Author: c(
-    person("Afonso Halal", "Guilherme", email = "guilhermehalal@gmail.com", role = c("aut", "cre")),
-    person("Ludtke Ferreira", "Ana Paula", email = "anaferreira@unipampa.edu.br", role = "ctb")
-    )
-Maintainer: Guilherme Halal <guilhermehalal@gmail.com>
-Description: This package permits, from variables related to agricultural
-    production, to generate static and dynamic Bayesian networks that
-    allow forecasting crop results. The package allows comparing the 
-    effectiveness of models generated from some network structure 
-    learning methods. The networks are generated based on 
-    functions available in the bnlearn (static networks) and 
-    dbnR (dynamic networks) packages. The forecasting of the crop production
-    can be done from sets of data geographically separated 
-    (specific areas of the plantation) 
-    and also from chronological cuts (phenological phases).
-    All functions identified with the term "TEST FUNCTION" in the documentation 
-    and with a name starting with 'test', were added to the package to run the 
-    demonstration of the package's functionalities. The demo.Rmd provides 
-    an interactive example of how the package works.
-    The final user must organize the dataset in dataframes representing the 
-    interval referring to a phenological phase and group them in lists 
-    according to the area of the plantation site.
+Authors@R: c(person("Afonso Halal", "Guilherme", role = c("aut", "cre"),
+                      email = "guilhermehalal@gmail.com"),
+              person("Ludtke Ferreira", "Ana Paula", role = "ctb", 
+              email = "anaferreira@unipampa.edu.br"))
+Author: Guilherme Afonso Halal [aut, cre], Ana Paula Ludtke Ferreira [ctb]
+Maintainer: Guilherme Afonso Halal <guilhermehalal@gmail.com>
+Description: This package permits, from variables related to agricultural production, to generate static and dynamic Bayesian networks that allow forecasting crop results. The package allows comparing the effectiveness of models generated from some network structure learning methods. The networks are generated based on functions available in the bnlearn (static networks) and dbnR (dynamic networks) packages. The forecasting of the crop production can be done from sets of data geographically separated (specific areas of the plantation) and also from chronological cuts (phenological phases).
+    All functions identified with the term TEST FUNCTION in the documentation and with a name starting with 'test', were added to the package to run the demonstration of the package's functionalities. The demo.Rmd provides an interactive example of how the package works.
+    The final user must organize the dataset in dataframes representing the interval referring to a phenological phase and group them in lists according to the area of the plantation site.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

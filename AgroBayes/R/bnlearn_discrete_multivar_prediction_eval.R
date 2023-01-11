@@ -1,6 +1,5 @@
 
 # trecho copiado do repositório https://github.com/KaikeWesleyReis/bnlearn-multivar-prediction-metrics
-# VER COMO CITAR NO TCC, CASO MANTIDO
 
 # FUNCTION - Multi Variable Discrete prediction
 bnMultiVarPrediction <- function(bnFit, trainSet, testSet, to_predict,
