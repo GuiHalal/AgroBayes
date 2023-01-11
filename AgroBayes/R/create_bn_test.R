@@ -121,10 +121,8 @@ testCreateNetworks <- function (areaphase, areatype){
               whitelist = whitelist,
               blacklist = blacklist,
               debug = FALSE)
-  graphics::plot(hc_dag)
 
   hc_dag_raw <-bnlearn::hc(training, debug = FALSE)
-  graphics::plot(hc_dag_raw)
 
 
   # Hybrid Learning Algorithm
@@ -133,10 +131,15 @@ testCreateNetworks <- function (areaphase, areatype){
                    whitelist = whitelist,
                    blacklist = blacklist,
                    debug = FALSE)
-  graphics::plot(mmhc_dag)
 
   mmhc_dag_raw <- bnlearn::mmhc(training, debug = FALSE)
-  graphics::plot(mmhc_dag_raw)
+
+  #ploting:
+
+  #graphics::plot(hc_dag, main = "hc_dag", mai = c(0.8, 0.8, 0.8, 0.8))
+  #graphics::plot(hc_dag_raw, main = "hc_dag_raw")
+  #graphics::plot(mmhc_dag, main = "mmhc_dag")
+  #graphics::plot(mmhc_dag_raw, main = "mmhc_dag_raw")
 
   # train networks
   hc_dag_fitted = bnlearn::bn.fit(hc_dag, training)

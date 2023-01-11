@@ -9,5 +9,39 @@ vignette: >
 
 ```{r setup}
 library(AgroBayes)
-# hello()
 ```
+
+```{r datagen}
+
+nHarvests = 1000
+nphases = 5
+nAreas = 6
+nVars = 3
+nClass = 5
+
+areas <- testRunDataGen(nHarvests, nphases, nAreas, nVars, nClass)
+areas_raw <- areas[1:(length(areas)/2)]
+areas_dis <- areas[((length(areas)/2)+1):length(areas)]
+
+```
+
+```{r static Bayesian Network}
+area1bn <- testRunNetworks(areas_dis[[1]], 1)
+area1bn
+write.csv(area1bn, file = "out_area1bn.csv")
+
+```
+
+```{r}
+area1Dbn <- createDbn(areas_raw[[1]])
+area1Dbn
+write.csv(area1Dbn, file = "out_area1Dbn.csv")
+
+```
+
+
+  return(area1)
+}
+
+```
+

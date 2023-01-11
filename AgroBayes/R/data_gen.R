@@ -270,10 +270,10 @@ testSetSimVarValues <- function (nHarvests, areatype, prodvars, nPhases){
 
     phases <- matrix(nrow=nPhases, ncol= length(prodvars)+1)
     colnames(phases) <-  colnames(phases, do.NULL = FALSE, prefix = "X_")
-    colnames(phases)[length(prodvars)+1] <-  "crop"
+    colnames(phases)[length(prodvars)+1] <-  "harvest"
     rownames(phases) <-  rownames(phases, do.NULL = FALSE, prefix = "phase_")
     crops[[i]] = phases
-    names_crops[i] = paste("crop", i, sep = "_")
+    names_crops[i] = paste("harvest", i, sep = "_")
   }
   names(crops) = names_crops
 
