@@ -1,55 +1,16 @@
-iniciaTeste <- function(){
-  set.seed(101)
-  file_path = "/home/gui/TCC/R/meu_pacote/teste1.csv" # DELETAR
-  file_path = # ADD THE PATH TO STORE THE TESTS OUTPUTS
-  nHarvests = 1000
-  nphases = 5
-  nAreas = 2
-  nVars = 3
-  #class_names <- c("L", "ML", "M", "MH", "H")
-  class_names <- c("L", "M", "H")
-  # lists to store the data by area
-  areas_list  = list()
-  areas_list_disc  = list()
-  areas_list  = BuildSimulationData(nHarvests, nphases)
-  #areas_list  = BuildSimulationData(nHarvests, nphases, nAreas, 10)
 
 
-  #for each area, create a list of dataframes
-  #each dataframe has the data of a phenological phase
-
-  for(area in 1:length(areas_list)){
-    areas_list[area] = createDataFrames(areas_list[area])
-    for(fase in 1:nphases){
-
-      model <- caret::preProcess(areas_list[[area]][[fase]], method="range")
-      areas_list[[area]][[fase]] <- stats::predict(model, areas_list[[area]][[fase]])
-    }
-  }
-  areas_list_disc = areas_list
-  #return(areas_list)
-
-  for(area in 1:length(areas_list)){#para cada área
-    for(fase in 1:length(areas_list[[1]])){#para cada fase da área
-      areas_list_disc[[area]][[fase]] <- bnlearn ::discretize(areas_list[[area]][[fase]],
-                                                    #idisc = 'interval',
-                                                    ordered = FALSE,
-                                                    method = 'hartemink',
-                                                    ibreaks = length(class_names)*5,
-                                                    breaks = length(class_names))
-      for(var in 1:dim(areas_list[[1]][[fase]])[2]){#para cada variável da área/fase
-        levels(areas_list_disc[[area]][[fase]][,var]) <- class_names
-      }
-    }
-  }
-  return(c(areas_list, areas_list_disc))
-}
-
-##  Gera dados
-## GERA O CONJUNTO DE DADOS DUAS VEZES,
 ##   SENDO A 1ª METADE OS DADOS "CRUS" (areas_raw)
 ##   E NA SEGUNDA METADE OS DADOS DISCRETIZADOS areas_dis
-areas <- iniciaTeste()
+
+
+nHarvests = 1000
+nphases = 5
+nAreas = 6
+nVars = 3
+nClass = 5
+
+areas <- testRunDataGen(nHarvests, nphases, nAreas, nVars, nClass)
 areas_raw <- areas[1:(length(areas)/2)]
 areas_dis <- areas[((length(areas)/2)+1):length(areas)]
 

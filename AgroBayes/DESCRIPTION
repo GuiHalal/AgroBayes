@@ -4,9 +4,10 @@ Title: Generates static and dynamic Bayesian networks for forecasting crop resul
 Version: 0.1.0
 Author: c(
     person("Afonso Halal", "Guilherme", email = "guilhermehalal@gmail.com", role = c("aut", "cre")),
-    person("Ludtke Ferreira", "Ana Paula", email = "anaferreira@unipampa.edu.br", role = "ctb"))
-Maintainer: Guilherme Halal guilhermehalal@gmail.com
-Description: This package permits, from variables related to agricultural
+    person("Ludtke Ferreira", "Ana Paula", email = "anaferreira@unipampa.edu.br", role = "ctb")
+    )
+Maintainer: Guilherme Halal <guilhermehalal@gmail.com>
+Description: "This package permits, from variables related to agricultural
     production, to generate static and dynamic Bayesian networks that
     allow forecasting crop results. The package allows comparing the 
     effectiveness of models generated from some network structure 
@@ -15,7 +16,7 @@ Description: This package permits, from variables related to agricultural
     dbnR (dynamic networks) packages. The forecasting of the crop production
     can be done from sets of data geographically separated 
     (specific areas of the plantation) 
-    and also from chronological cuts (phenological phases).
+    and also from chronological cuts (phenological phases)."
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

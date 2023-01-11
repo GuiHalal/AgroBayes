@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/reference/test_package.html#special-files
 
 library(testthat)
-library(AgroGraph)
+library(AgroBayes)
 
-test_check("AgroGraph")
+test_check("AgroBayes")

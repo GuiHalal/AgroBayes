@@ -835,19 +835,6 @@ areas_dis <- areas[((length(areas)/2)+1):length(areas)]
 areas_raw[[5]]
 ```
 
-```{r RASCUNHO - TESTES PARA DOCUMENTAÇÃO}
-saida <- criaRedes(areas_dis[[1]][[1]], 1)
-saida
-area1
-
-x <- criaRedesDinamc(areas_raw[[1]])
-x
-
-plot(x)
-plot(x$RMSE)
-```
-
-
 ```{r TESTE - REDES ESTÁTICAS (dblearn)}
 
 area1 <- rodaRede(areas_dis[[1]], 1)
