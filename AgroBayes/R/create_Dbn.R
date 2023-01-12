@@ -84,6 +84,8 @@ createDbn <- function(area){
     }
   }
 
+  #ploting:
+
   # plot(dag_natPsoho)
   # plot(dag_dmmhc)
 

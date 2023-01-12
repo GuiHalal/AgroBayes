@@ -38,4 +38,3 @@ for the purpose of comparing performance between dynamic and static networks.
 areas <- testRunDataGen(nHarvests, nphases, nAreas, nVars, nClass)
 }
 }
-\keyword{internal}

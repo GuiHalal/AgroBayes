@@ -23,7 +23,6 @@
 #' \donttest{
 #' areas <- testRunDataGen(nHarvests, nphases, nAreas, nVars, nClass)
 #' }
-#' @keywords internal
 #' @export
 #'
 
@@ -82,11 +81,9 @@ testRunDataGen <- function(nHarvests, nphases, nAreas, nVars, nClass, ...){
 #' returning a list of areas with harvest data.
 #'
 #' @param nHarvests number of harvests.
-#' @param nphases number of phenological phases.
+#' @param nPhases number of phenological phases.
 #' @param nAreas number of areas of the plantation site
 #' if not informed the default is 6 areas.
-#' @param nVars number of variables (not counting the dependent variable)
-#' if not informed the default is 3 variables.
 #' @param ... parameters passed to
 #' \code{\link{testDefVars}} function
 #'
@@ -100,7 +97,6 @@ testRunDataGen <- function(nHarvests, nphases, nAreas, nVars, nClass, ...){
 #' areas_list  = testBuildSimulationData(nHarvests, nphases)
 #' areas_list_2  = testBuildSimulationData(nHarvests, nPhases, nAreas, nVars)
 #' }
-#' @keywords internal
 #' @export
 #'
 
@@ -161,7 +157,7 @@ testBuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
 #' variables is not defined, 3 variables will be initialized, one that always
 #' grows over time, a constant and one that oscillates over time.
 #'
-#' @param nVars number of variables (not counting the dependent variable)
+#' @param n_var number of variables (not counting the dependent variable)
 #' if not informed the default is 3 variables.
 #' @param type_var a list of types of variables. If informed the \code{name_var}
 #' parameter must be informed too.
@@ -178,7 +174,6 @@ testBuildSimulationData <- function (nHarvests, nPhases, nAreas = NULL, ...) {
 #' c("precipitation", "Mn_rate", "Zn_rate", "avg_temp"),
 #'  c(1, 3, 3, 2))
 #' }
-#' @keywords internal
 #' @export
 #'
 
@@ -246,7 +241,7 @@ testDefVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
 #' 'harvest' variable
 #' @param prodvars list of independent variables, that is a list containing
 #' (name of the variable, type of variable, value min and value max)
-#' @param nphases number of phenological phases.
+#' @param nPhases number of phenological phases.
 
 #' @return list of values of all variables
 #' @examples
@@ -254,7 +249,6 @@ testDefVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
 #' variables =
 #' testSetSimVarValues(nHarvests, areatype, defProdVariables, nPhases)
 #' }
-#' @keywords internal
 #' @export
 #'
 
@@ -373,7 +367,8 @@ testSetSimVarValues <- function (nHarvests, areatype, prodvars, nPhases){
       }
     }
 
-    # Area 5: the production weight decreases with a weighting of the X2 values:
+    # Area 5: the production weight decreases
+    # with a weighting of the X2 values:
     # Prod = 1*X21 + 0.8*X22 + 0.6*X23 + 0.4*X24 + 0.2*X25
     else if (areatype == 5) {
       for(h in 1:nHarvests) {
@@ -387,7 +382,8 @@ testSetSimVarValues <- function (nHarvests, areatype, prodvars, nPhases){
       }
     }
 
-    # Area 6: the weight of production grows with a weighting of the values of X1:
+    # Area 6: the weight of production grows
+    # with a weighting of the values of X1:
     # Prod = 0.2*X11 + 0.4*X12 + 0.6*X13 + 0.8*X14 + 1*X15
     else if (areatype == 6){
       for(h in 1:nHarvests) {
@@ -440,7 +436,8 @@ testSetSimVarValues <- function (nHarvests, areatype, prodvars, nPhases){
       }
     }
 
-    # Area 4: the production weight is inversely proportional to the sum of the odd variables
+    # Area 4: the production weight is inversely proportional to the sum of
+    # the odd variables
     # Prod = 1/(X11+X13) + 1/(...)
     else if (areatype == 4) {
       for(h in 1:nHarvests) {
@@ -459,7 +456,8 @@ testSetSimVarValues <- function (nHarvests, areatype, prodvars, nPhases){
       }
     }
 
-    # Area 5: the production weight decreases with a weighting of the sum of the odd variables
+    # Area 5: the production weight decreases with a weighting
+    # of the sum of the odd variables
     # Prod = 1*X21 + 0.8*X22 + 0.6*X23 + 0.4*X24 + 0.2*X25
     else if (areatype == 5) {
       for(h in 1:nHarvests) {
@@ -479,7 +477,8 @@ testSetSimVarValues <- function (nHarvests, areatype, prodvars, nPhases){
       }
     }
 
-    # Area 6: the production weight grows with a weighting of the values of the even variables:
+    # Area 6: the production weight grows with a weighting
+    # of the values of the even variables:
     # Prod = 0.2*X11 + 0.4*X12 + 0.6*X13 + 0.8*X14 + 1*X15
     else if (areatype == 6) {
       for(h in 1:nHarvests) {
@@ -516,7 +515,6 @@ testSetSimVarValues <- function (nHarvests, areatype, prodvars, nPhases){
 #' \donttest{
 #' area_1_df = testCreateDataFrames(area_1_list)
 #' }
-#' @keywords internal
 #' @export
 #'
 

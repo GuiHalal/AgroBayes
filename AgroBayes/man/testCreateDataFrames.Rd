@@ -22,4 +22,3 @@ it into dataframes, one dataframe for each phenological phase.
 area_1_df = testCreateDataFrames(area_1_list)
 }
 }
-\keyword{internal}

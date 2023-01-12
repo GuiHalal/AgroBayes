@@ -9,16 +9,13 @@ testBuildSimulationData(nHarvests, nPhases, nAreas = NULL, ...)
 \arguments{
 \item{nHarvests}{number of harvests.}
 
+\item{nPhases}{number of phenological phases.}
+
 \item{nAreas}{number of areas of the plantation site
 if not informed the default is 6 areas.}
 
 \item{...}{parameters passed to
 \code{\link{testDefVars}} function}
-
-\item{nphases}{number of phenological phases.}
-
-\item{nVars}{number of variables (not counting the dependent variable)
-if not informed the default is 3 variables.}
 }
 \value{
 list of areas with harvest data.
@@ -38,4 +35,3 @@ areas_list  = testBuildSimulationData(nHarvests, nphases)
 areas_list_2  = testBuildSimulationData(nHarvests, nPhases, nAreas, nVars)
 }
 }
-\keyword{internal}

@@ -16,7 +16,7 @@ kind of relationship between the independent variables and the
 \item{prodvars}{list of independent variables, that is a list containing
 (name of the variable, type of variable, value min and value max)}
 
-\item{nphases}{number of phenological phases.}
+\item{nPhases}{number of phenological phases.}
 }
 \value{
 list of values of all variables
@@ -36,4 +36,3 @@ variables =
 testSetSimVarValues(nHarvests, areatype, defProdVariables, nPhases)
 }
 }
-\keyword{internal}

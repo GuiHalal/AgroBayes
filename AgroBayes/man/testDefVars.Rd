@@ -7,14 +7,14 @@
 testDefVars(n_var = NULL, type_var = NULL, name_var = NULL)
 }
 \arguments{
+\item{n_var}{number of variables (not counting the dependent variable)
+if not informed the default is 3 variables.}
+
 \item{type_var}{a list of types of variables. If informed the \code{name_var}
 parameter must be informed too.}
 
 \item{name_var}{a list of names of variables. If informed the \code{type_var}
 parameter must be informed too.}
-
-\item{nVars}{number of variables (not counting the dependent variable)
-if not informed the default is 3 variables.}
 }
 \value{
 list of variables, that is a list containing
@@ -40,4 +40,3 @@ c("precipitation", "Mn_rate", "Zn_rate", "avg_temp"),
  c(1, 3, 3, 2))
 }
 }
-\keyword{internal}
