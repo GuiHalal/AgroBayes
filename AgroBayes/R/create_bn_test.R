@@ -110,10 +110,10 @@ testCreateNetworks <- function (areaphase, areatype){
 
 
 
-  # hc_dag =      Hill-Climbing with network topology definition
-  # hc_dag_raw =  Hill-Climbing without defining the network topology
-  # mmhc_dag =    Max-Min Hill-Climbing with network topology definition
-  # mmhc_dag_raw = Max-Min Hill-Climbing without defining the network topology
+  # hc_dag:       Hill-Climbing with network topology definition
+  # hc_dag_raw:   Hill-Climbing without defining the network topology
+  # mmhc_dag:     Max-Min Hill-Climbing with network topology definition
+  # mmhc_dag_raw: Max-Min Hill-Climbing without defining the network topology
 
   # Score-based Learning Algorithm
 

@@ -41,7 +41,7 @@ testRunDataGen <- function(nHarvests, nphases, nAreas, nVars, nClass, ...){
   # lists to store the data by area
   areas_list  = list()
   areas_list_disc  = list()
-  areas_list  = testBuildSimulationData(nHarvests, nphases)
+  areas_list  = testBuildSimulationData(nHarvests, nphases, nAreas, nVars)
 
 
   #for each area, create a list of dataframes

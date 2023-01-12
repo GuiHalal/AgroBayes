@@ -13,16 +13,15 @@ library(AgroBayes)
 
 ```{r datagen}
 
-nHarvests = 1000
+nHarvests = 100
 nphases = 5
 nAreas = 6
 nVars = 3
-nClass = 5
+nClass = 3
 
 areas <- testRunDataGen(nHarvests, nphases, nAreas, nVars, nClass)
 areas_raw <- areas[1:(length(areas)/2)]
 areas_dis <- areas[((length(areas)/2)+1):length(areas)]
-
 ```
 
 ```{r static Bayesian Network}
