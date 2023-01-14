@@ -84,8 +84,6 @@ createDbn <- function(area){
     }
   }
 
-  #ploting:
-
   # plot(dag_natPsoho)
   # plot(dag_dmmhc)
 
@@ -141,7 +139,7 @@ createDbn <- function(area){
   dmmhc_approx =  caret::defaultSummary(metrics_df_dmmhc_approx)
   dmmhc_exact =  caret::defaultSummary(metrics_df_dmmhc_exact)
 
-  metrics_dags = data.frame(rbind(natPsoho_approx,
+  metrics_dags = data.frame(cbind(natPsoho_approx,
                                   dmmhc_approx,
                                   natPsoho_exact,
                                   dmmhc_exact))

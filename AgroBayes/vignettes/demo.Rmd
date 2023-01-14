@@ -11,9 +11,71 @@ vignette: >
 library(AgroBayes)
 ```
 
+
+```{r geraGraph}
+geraGraph <-function(areaN, file, subtitulo){
+  
+  text_size <- 20
+  
+  areaN$redes <- rep(c("hc_dag", "hc_dag_raw", "mmhc_dag", "mmhc_dag_raw"),
+                     each = 1)
+  areaN$periodo <- rep(c("fase 1", "fase 2", "fase 3", "fase 4", "fase 5"), 
+                       each = 4)
+  areaN$periodo <- factor(areaN$periodo, levels = 
+                            c("fase 1", "fase 2", "fase 3", "fase 4", "fase 5"))
+  
+  png(file, width = 1024, height = 768)
+  
+  plot(
+    ggplot2::ggplot(areaN, ggplot2::aes(periodo, accuracy, fill = redes)) +
+      ggplot2::scale_y_continuous(limits = c(0,100), breaks = seq(0,100,25)) +
+       ggplot2::labs(
+         # title = "Acurácia de Redes Estáticas por fase",
+         subtitle = subtitulo
+         # caption = "Fonte: Autor(2022)"
+         )+
+     ggplot2::scale_fill_brewer(palette = "Spectral") + # Spectral; Paired; Set3
+      ggplot2::geom_col(position = "dodge", 
+                show.legend = TRUE, linetype = 1, alpha = .65) +
+      ggplot2::geom_text(ggplot2::aes(label = accuracy), vjust = 1,
+                 position = ggplot2::position_dodge(.9),
+                 size = 5, color = "black")+
+       ggplot2::theme(axis.ticks.length = ggplot2::unit(.3, "cm"),
+                      axis.text = 
+                        ggplot2::element_text(size = 
+                                                text_size, colour = "black"),
+                      axis.title = 
+                        ggplot2::element_text(size =
+                                                text_size, colour = "black"),
+                      axis.ticks = 
+                        ggplot2::element_line(colour = "black"),
+                      panel.border = 
+                        ggplot2::element_rect(colour =
+                                                "black", fill = NA, size = 0.5),
+             legend.position="bottom",
+             legend.text = ggplot2::element_text(colour="black", 
+                                        size=text_size, face="bold"),
+
+             legend.title =  ggplot2::element_text(colour="black", 
+                                          size=text_size, face="bold"),
+
+             plot.title.position = "panel",
+             plot.caption.position = "panel",
+             title = ggplot2::element_text(colour="black", 
+                                           size=text_size, face="bold")
+          # panel.grid =  element_blank()
+          )+
+      ggplot2::geom_hline(yintercept = mean(areaN$accuracy),
+                          linetype = "solid", size = .2))
+  
+  dev.off()
+}
+```
+
+
 ```{r datagen}
 
-nHarvests = 100
+nHarvests = 1000
 nphases = 5
 nAreas = 6
 nVars = 3
@@ -25,22 +87,71 @@ areas_dis <- areas[((length(areas)/2)+1):length(areas)]
 ```
 
 ```{r static Bayesian Network}
-area1bn <- testRunNetworks(areas_dis[[1]], 1)
-area1bn
-write.csv(area1bn, file = "out_area1bn.csv")
+area1bn <- testRunNetworks(areas_dis[[1]],1)
+geraGraph(area1bn, "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/1k/grafico_ESTATICA_A1.png", "Área 1")
+
+area2bn <- testRunNetworks(areas_dis[[2]],2)
+geraGraph(area2bn, "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/1k/grafico_ESTATICA_A2.png", "Área 2")
+
+area3bn <- testRunNetworks(areas_dis[[3]],3)
+geraGraph(area3bn, "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/1k/grafico_ESTATICA_A3.png", "Área 3")
+
+area4bn <- testRunNetworks(areas_dis[[4]],4)
+geraGraph(area4bn, "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/1k/grafico_ESTATICA_A4.png", "Área 4")
+
+area5bn <- testRunNetworks(areas_dis[[5]],5)
+geraGraph(area5bn, "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/1k/grafico_ESTATICA_A5.png", "Área 5")
+
+area6bn <- testRunNetworks(areas_dis[[6]],6)
+geraGraph(area6bn, "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/1k/grafico_ESTATICA_A6.png", "Área 6")
 
 ```
 
-```{r}
+```{r dynamic Bayesian Network}
 area1Dbn <- createDbn(areas_raw[[1]])
-area1Dbn
-write.csv(area1Dbn, file = "out_area1Dbn.csv")
+area2Dbn <- createDbn(areas_raw[[2]])
+area3Dbn <- createDbn(areas_raw[[3]])
+area4Dbn <- createDbn(areas_raw[[4]])
+area5Dbn <- createDbn(areas_raw[[5]])
+area6Dbn <- createDbn(areas_raw[[6]])
 
-```
+planilhao = data.frame(rbind(area1Dbn,
+                                area2Dbn,
+                                area3Dbn,
+                                area4Dbn,
+                                area5Dbn,
+                                area6Dbn
+                                ))
 
-
-  return(area1)
+RMSE <-data.frame()
+i=1
+for(a in 1:6){
+  RMSE<-data.frame(rbind(RMSE, planilhao[i,]))
+  i=i+3
 }
 
+Rsquared <-data.frame()
+i=2
+for(a in 1:6){
+  Rsquared<-data.frame(rbind(Rsquared, planilhao[i,]))
+  i=i+3
+}
+
+MAE <-data.frame()
+i=3
+for(a in 1:6){
+  MAE<-data.frame(rbind(MAE, planilhao[i,]))
+  i=i+3
+}
+
+
+RMSE
+Rsquared
+MAE
+# write.csv(RMSE, file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_Dbn/5/RMSE_5.csv")
+# write.csv(Rsquared, file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_Dbn/5/Rsquared_5.csv")
+# write.csv(MAE, file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_Dbn/5/MAE_5.csv")
 ```
+
+
 

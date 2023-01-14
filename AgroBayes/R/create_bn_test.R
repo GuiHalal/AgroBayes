@@ -136,10 +136,10 @@ testCreateNetworks <- function (areaphase, areatype){
 
   #ploting:
 
-  #graphics::plot(hc_dag, main = "hc_dag", mai = c(0.8, 0.8, 0.8, 0.8))
-  #graphics::plot(hc_dag_raw, main = "hc_dag_raw")
-  #graphics::plot(mmhc_dag, main = "mmhc_dag")
-  #graphics::plot(mmhc_dag_raw, main = "mmhc_dag_raw")
+  # graphics::plot(hc_dag, main = "hc_dag")
+  # graphics::plot(hc_dag_raw, main = "hc_dag_raw")
+  # graphics::plot(mmhc_dag, main = "mmhc_dag")
+  # graphics::plot(mmhc_dag_raw, main = "mmhc_dag_raw")
 
   # train networks
   hc_dag_fitted = bnlearn::bn.fit(hc_dag, training)
