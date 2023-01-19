@@ -27,7 +27,7 @@
 #'
 
 testRunDataGen <- function(nHarvests, nphases, nAreas, nVars, nClass, ...){
-  set.seed(101)
+  #set.seed(101)
   file_path = "/data"
   if(nClass == 5){
     class_names <- c("L", "ML", "M", "MH", "H")

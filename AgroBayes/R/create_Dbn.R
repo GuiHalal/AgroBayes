@@ -23,7 +23,7 @@
 #' @export
 #'
 createDbn <- function(area){
-
+  #area <- areas_raw[[1]]
   temp <- area[[length(area)]]
   nvar <- dim(temp)[2]
   size <- length(area)
@@ -57,15 +57,15 @@ createDbn <- function(area){
   # Learning the dbn
 
   dag_natPsoho <- dbnR::learn_dbn_struc(dt = trainingDBN,
-                                  size = size,
-                                  f_dt = trainingDBN,
-                                  method = "natPsoho")
+                                        size = size,
+                                        f_dt = trainingDBN,
+                                        method = "natPsoho")
 
   dag_dmmhc <- dbnR::learn_dbn_struc(dt = NULL,
-                               size = size,
-                               f_dt = trainingDBN,
-                               method = "dmmhc",
-                               intra = F)
+                                     size = size,
+                                     f_dt = trainingDBN,
+                                     method = "dmmhc",
+                                     intra = F)
 
   # If existing, remove arcs from nodes 'harvest_t'
   for(i in 1:(size-1)){
@@ -118,6 +118,7 @@ createDbn <- function(area){
                                                ini = 1, len = length(testDBN),
                                                print_res = F, plot_res = F)
 
+
   metrics_df_natPsoho_approx =
     data.frame(obs = predict_dag_natPsoho_approx$orig$harvest_t_0,
                pred = predict_dag_natPsoho_approx$pred$harvest_t_0)
@@ -134,10 +135,17 @@ createDbn <- function(area){
     data.frame(obs = predict_dag_dmmhc_exact$orig$harvest_t_0,
                pred = predict_dag_dmmhc_exact$pred$harvest_t_0)
 
-  natPsoho_approx =  caret::defaultSummary(metrics_df_natPsoho_approx)
-  natPsoho_exact =  caret::defaultSummary(metrics_df_natPsoho_exact)
-  dmmhc_approx =  caret::defaultSummary(metrics_df_dmmhc_approx)
-  dmmhc_exact =  caret::defaultSummary(metrics_df_dmmhc_exact)
+  natPsoho_approx =  c(caret::defaultSummary(metrics_df_natPsoho_approx),
+                       accurCalc(metrics_df_natPsoho_approx))
+
+  natPsoho_exact =  c(caret::defaultSummary(metrics_df_natPsoho_exact),
+                      accurCalc(metrics_df_natPsoho_exact))
+
+  dmmhc_approx = c(caret::defaultSummary(metrics_df_dmmhc_approx),
+                   accurCalc(metrics_df_dmmhc_approx))
+
+  dmmhc_exact = c(caret::defaultSummary(metrics_df_dmmhc_exact),
+                  accurCalc(metrics_df_dmmhc_exact))
 
   metrics_dags = data.frame(cbind(natPsoho_approx,
                                   dmmhc_approx,
