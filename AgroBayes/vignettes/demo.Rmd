@@ -120,41 +120,45 @@ areas_dis <- areas[((length(areas)/2)+1):length(areas)]
   area4bn <- runTest(nHarvests, nphases, nAreas, nVars, nClass, 4, nsample)
   area5bn <- runTest(nHarvests, nphases, nAreas, nVars, nClass, 5, nsample)
   area6bn <- runTest(nHarvests, nphases, nAreas, nVars, nClass, 6, nsample)
+
+# to use this functionality, uncomment the 
+# excerpt below and inform the path to the outputs in the file variables
   
-  file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/10/grafico_ESTATICA_A1 - 10.png"
-  geraGraph(area1bn, file, "Area 1")
-  file2 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/10/ESTATICA_A1_10.csv"
-  write.csv(area1bn, file2)
-  
-  #a2
-  file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/10/grafico_ESTATICA_A2 - 10.png"
-  geraGraph(area2bn, file,  "Area 2")
-  file2 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/10/ESTATICA_A2_10.csv"
-  write.csv(area2bn, file2)
-  
-  #a3
-  file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/10/grafico_ESTATICA_A3 - 10.png"
-  geraGraph(area3bn, file,  "Area 3")
-  file2 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/10/ESTATICA_A3_10.csv"
-  write.csv(area3bn, file2)
-  
-  #a4
-  file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/10/grafico_ESTATICA_A4 - 10.png"
-  geraGraph(area4bn, file, "Area 4")
-  file2 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/10/ESTATICA_A4_10.csv"
-  write.csv(area4bn, file2)
-  
-  #a5
-  file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/10/grafico_ESTATICA_A5 - 10.png"
-  geraGraph(area5bn, file, "Area 5")
-  file2 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/10/ESTATICA_A5_10.csv"
-  write.csv(area5bn, file2)
-  
-  #a6
-  file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/10/grafico_ESTATICA_A6 - 10.png"
-  geraGraph(area6bn, file,  "Area 6")
-  file2 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/10/ESTATICA_A6_10.csv"
-  write.csv(area6bn, file2)
+# #a1
+#   file = "path_to_where_save_the_outputs"
+#   geraGraph(area1bn, file, "Area 1")
+#   file2 = "path_to_where_save_the_outputs"
+#   write.csv(area1bn, file2)
+#   
+# #a2
+#   file = "path_to_where_save_the_outputs"
+#   geraGraph(area2bn, file,  "Area 2")
+#   file2 = "path_to_where_save_the_outputs"
+#   write.csv(area2bn, file2)
+#   
+# #a3
+#   file = "path_to_where_save_the_outputs"
+#   geraGraph(area3bn, file,  "Area 3")
+#   file2 = "path_to_where_save_the_outputs"
+#   write.csv(area3bn, file2)
+#   
+# #a4
+#   file = "path_to_where_save_the_outputs"
+#   geraGraph(area4bn, file, "Area 4")
+#   file2 = "path_to_where_save_the_outputs"
+#   write.csv(area4bn, file2)
+#   
+# #a5
+#   file = "path_to_where_save_the_outputs"
+#   geraGraph(area5bn, file, "Area 5")
+#   file2 = "path_to_where_save_the_outputs"
+#   write.csv(area5bn, file2)
+#   
+# #a6
+#   file = "path_to_where_save_the_outputs"
+#   geraGraph(area6bn, file,  "Area 6")
+#   file2 = "path_to_where_save_the_outputs"
+#   write.csv(area6bn, file2)
 ```
 
 ```{r test 100 e 200}
@@ -225,50 +229,53 @@ for(a in 1:6){
   i=i+4
 }
 
-file3 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_Dbn/200/MAE.csv"
-write.csv(MAE, file3)
-file3 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_Dbn/200/Accuracy.csv"
-write.csv(Accuracy, file3)
-file3 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_Dbn/200/RMSE.csv"
-write.csv(RMSE, file3)
-file3 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_Dbn/200/Rsquared.csv"
-write.csv(Rsquared, file3)
+# to use this functionality, uncomment the 
+# excerpt below and inform the path to the outputs in the file variables
 
- # a1
-  file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/200/grafico_ESTATICA_A1 - 200.png"
-  geraGraph(area1bn, file, "Area 1")
-  file2 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/200/ESTATICA_A1_200.csv"
-  write.csv(area1bn, file2)
-  
-  #a2
-  file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/200/grafico_ESTATICA_A2 - 200.png"
-  geraGraph(area2bn, file,  "Area 2")
-  file2 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/200/ESTATICA_A2_200.csv"
-  write.csv(area2bn, file2)
-  
-  #a3
-  file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/200/grafico_ESTATICA_A3 - 200.png"
-  geraGraph(area3bn, file,  "Area 3")
-  file2 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/200/ESTATICA_A3_200.csv"
-  write.csv(area3bn, file2)
-  
-  #a4
-  file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/200/grafico_ESTATICA_A4 - 200.png"
-  geraGraph(area4bn, file, "Area 4")
-  file2 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/200/ESTATICA_A4_200.csv"
-  write.csv(area4bn, file2)
-  
-  #a5
-  file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/200/grafico_ESTATICA_A5 - 200.png"
-  geraGraph(area5bn, file, "Area 5")
-  file2 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/200/ESTATICA_A5_200.csv"
-  write.csv(area5bn, file2)
-  
-  #a6
-  file = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/200/grafico_ESTATICA_A6 - 200.png"
-  geraGraph(area6bn, file,  "Area 6")
-  file2 = "/home/gui/TCC/R/meu_pacote/saidas/Graficos_estaticas/200/ESTATICA_A6_200.csv"
-  write.csv(area6bn, file2)
+# file3 = "path_to_where_save_the_outputs"
+# write.csv(MAE, file3)
+# file3 = "path_to_where_save_the_outputs"
+# write.csv(Accuracy, file3)
+# file3 = "path_to_where_save_the_outputs"
+# write.csv(RMSE, file3)
+# file3 = "path_to_where_save_the_outputs"
+# write.csv(Rsquared, file3)
+# 
+# # a1
+#   file = "path_to_where_save_the_outputs"
+#   geraGraph(area1bn, file, "Area 1")
+#   file2 = "path_to_where_save_the_outputs"
+#   write.csv(area1bn, file2)
+#   
+# #a2
+#   file = "path_to_where_save_the_outputs"
+#   geraGraph(area2bn, file,  "Area 2")
+#   file2 = "path_to_where_save_the_outputs"
+#   write.csv(area2bn, file2)
+#   
+# #a3
+#   file = "path_to_where_save_the_outputs"
+#   geraGraph(area3bn, file,  "Area 3")
+#   file2 = "path_to_where_save_the_outputs"
+#   write.csv(area3bn, file2)
+#   
+# #a4
+#   file = "path_to_where_save_the_outputs"
+#   geraGraph(area4bn, file, "Area 4")
+#   file2 = "path_to_where_save_the_outputs"
+#   write.csv(area4bn, file2)
+#   
+# #a5
+#   file = "path_to_where_save_the_outputs"
+#   geraGraph(area5bn, file, "Area 5")
+#   file2 = "path_to_where_save_the_outputs"
+#   write.csv(area5bn, file2)
+#   
+# #a6
+#   file = "path_to_where_save_the_outputs"
+#   geraGraph(area6bn, file,  "Area 6")
+#   file2 = "path_to_where_save_the_outputs"
+#   write.csv(area6bn, file2)
 
 ```
 

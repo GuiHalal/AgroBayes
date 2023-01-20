@@ -32,7 +32,6 @@ the \code{\link{createNetworks}} function.}
 }
 \value{
 List of values returned from \code{bnMetricsMultiVarPrediction}.
-See more in \url{https://github.com/KaikeWesleyReis/bnlearn-multivar-prediction-metrics#bnmetricsmultivarprediction}
 }
 \description{
 Using the functions available in the repository

@@ -134,7 +134,7 @@ createNetworks <- function (areaphase, blacklist, whitelist){
 
   #ploting:
 
-  #graphics::plot(hc_dag, main = "hc_dag", mai = c(0.8, 0.8, 0.8, 0.8))
+  #graphics::plot(hc_dag, main = "hc_dag")
   #graphics::plot(hc_dag_raw, main = "hc_dag_raw")
   #graphics::plot(mmhc_dag, main = "mmhc_dag")
   #graphics::plot(mmhc_dag_raw, main = "mmhc_dag_raw")
@@ -176,11 +176,12 @@ createNetworks <- function (areaphase, blacklist, whitelist){
 #' @param dag_fitted4 Fitted Bayesian network to be tested
 #'
 #' @return List of values returned from \code{bnMetricsMultiVarPrediction}.
-#' See more in \url{https://github.com/KaikeWesleyReis/bnlearn-multivar-prediction-metrics#bnmetricsmultivarprediction}
+#' @Seemore in \url{https://github.com/KaikeWesleyReis/bnlearn-multivar-prediction-metrics#bnmetricsmultivarprediction}
 #' @export
 #'
 
-validateNetwork <- function(test, train, dag_fitted1, dag_fitted2, dag_fitted3, dag_fitted4) {
+validateNetwork <- function(test, train, dag_fitted1, dag_fitted2,
+                            dag_fitted3, dag_fitted4) {
   # Define Target variables (Variables to be predicted)
   pred <-'harvest'
   # Evidence variables
@@ -229,8 +230,6 @@ validateNetwork <- function(test, train, dag_fitted1, dag_fitted2, dag_fitted3, 
   metrics4 <- bnMetricsMultiVarPrediction(reference = test[pred],
                                           prediction = results4$dominantList,
                                           predProbList = results4$probList)
-
-  # cat("Confusion matrix dag 1: ", metrics1$cmList)
 
   return(c(metrics1, metrics2, metrics3, metrics4))
 }

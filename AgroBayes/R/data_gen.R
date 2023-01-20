@@ -65,7 +65,7 @@ testRunDataGen <- function(nHarvests, nphases, nAreas, nVars, nClass, ...){
                              method = 'hartemink',
                              ibreaks = length(class_names)*5,
                              breaks = length(class_names))
-      for(var in 1:dim(areas_list[[1]][[fase]])[2]){#para cada variável da área/fase
+      for(var in 1:dim(areas_list[[1]][[fase]])[2]){#for each area/phase var
         levels(areas_list_disc[[area]][[fase]][,var]) <- class_names
       }
     }
@@ -208,7 +208,8 @@ testDefVars <- function (n_var = NULL, type_var = NULL, name_var = NULL){
       }
       return (prodVariables)
     }else{
-      # Being informed the n of variables, without further details the generation
+      # Being informed the n of variables,
+      # without further details the generation
       # occurs randomly, as follows:
       for (i in 1 : n_var){
         tempType = sample(1:3, 1)
@@ -279,7 +280,7 @@ testSetSimVarValues <- function (nHarvests, areatype, prodvars, nPhases){
                              max=as.numeric(prodvars[[var]][3]))
       last_value_var = 0
       const_value    = random_value
-      for (pha in 1:nPhases){ #pfor eachphase
+      for (pha in 1:nPhases){ #for each phase
         # type (up=1,osc=2,const=3)
         if (prodvars[[var]][4]==1){
           v_value = random_value + last_value_var
@@ -324,9 +325,8 @@ testSetSimVarValues <- function (nHarvests, areatype, prodvars, nPhases){
   # the arbitrated relations with the variables
 
 
-  ##### POR DEFAULT CONSIDERA-SE 3 VARIÁVES:
+  ##### BY DEFAULT, 3 VARIABLES ARE CONSIDERED:
   if(length(prodvars)==3){
-    #  print('AQUI')
 
     # Area 1: production weight varies linearly with the values of all
     # variables in the first two phenological phases
@@ -354,7 +354,8 @@ testSetSimVarValues <- function (nHarvests, areatype, prodvars, nPhases){
       }
     }
 
-    # Area 4: the production weight is inversely proportional to the sum of X1 and X3
+    # Area 4: the production weight is inversely proportional
+    # to the sum of X1 and X3
     # Prod = 1/(X11+X13) + 1/(...)
     else if (areatype == 4) {
       for(h in 1:nHarvests) {
@@ -497,7 +498,7 @@ testSetSimVarValues <- function (nHarvests, areatype, prodvars, nPhases){
         crops[[h]][,length(prodvars)+1] =  producaoPhase
       }
     }
-  }#fim else
+  }#end else
 
   return(crops)
 }
