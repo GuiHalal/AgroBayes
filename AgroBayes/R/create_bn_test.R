@@ -182,7 +182,8 @@ testCreateNetworks <- function (areaphase, areatype){
 #' @export
 #'
 
-testValidateNetwork <- function(test, train, dag_fitted1, dag_fitted2, dag_fitted3, dag_fitted4) {
+testValidateNetwork <- function(test, train, dag_fitted1, dag_fitted2,
+                                dag_fitted3, dag_fitted4) {
   # Define Target variables (Variables to be predicted)
   pred <-'harvest'
   # Evidence variables
@@ -231,8 +232,6 @@ testValidateNetwork <- function(test, train, dag_fitted1, dag_fitted2, dag_fitte
   metrics4 <- bnMetricsMultiVarPrediction(reference = test[pred],
                                           prediction = results4$dominantList,
                                           predProbList = results4$probList)
-
-  # cat("Confusion matrix dag 1: ", metrics1$cmList)
 
   return(c(metrics1, metrics2, metrics3, metrics4))
 }

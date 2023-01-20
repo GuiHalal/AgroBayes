@@ -1,5 +1,6 @@
 
-# trecho copiado do repositório https://github.com/KaikeWesleyReis/bnlearn-multivar-prediction-metrics
+# trecho copiado do repositório
+  # https://github.com/KaikeWesleyReis/bnlearn-multivar-prediction-metrics
 
 # FUNCTION - Multi Variable Discrete prediction
 bnMultiVarPrediction <- function(bnFit, trainSet, testSet, to_predict,
@@ -82,7 +83,9 @@ bnMultiVarPrediction <- function(bnFit, trainSet, testSet, to_predict,
   # Turn dominant output in factors - help metrics CM
   for(j in to_predict){
     #levels(pred_list_domi[[j]]) <- levels(trainSet[,j])
-    pred_list_domi[[j]] <- factor(x = unlist(pred_list_domi[[j]], use.names = F), levels = levels(trainSet[,j]))
+    pred_list_domi[[j]] <- factor(x = unlist(pred_list_domi[[j]],
+                                             use.names = F),
+                                  levels = levels(trainSet[,j]))
   }
   # Returning
   ret_list <- list("probList" = pred_list_prob, "dominantList" = pred_list_domi)
@@ -122,7 +125,9 @@ bnMetricsMultiVarPrediction <- function(reference, prediction, predProbList){
   for(j in to_predict){
     # OVA INIT
     lvls_var = colnames(cm_list[[j]])
-    ova_list[[j]] <- stats::setNames(vector(mode = "list", length = length(lvls_var)), lvls_var)
+    ova_list[[j]] <- stats::setNames(vector(mode = "list",
+                                            length = length(lvls_var)),
+                                     lvls_var)
 
     ### PRINT
     #cat(paste('ONE VS ALL - ',j,'Variable:\n\n'))
@@ -162,7 +167,9 @@ bnMetricsMultiVarPrediction <- function(reference, prediction, predProbList){
     }
   }
 
-  # CONFUSION MATRIX METRICS - ONE VS ALL :: SEN, SPECIFICITY, RECALL, ACCURACY, F1-SCORE, MCC, ACCURACY OVA
+  # CONFUSION MATRIX METRICS - ONE VS ALL :: SEN, SPECIFICITY,
+  # RECALL, ACCURACY, F1-SCORE, MCC, ACCURACY OVA
+
   for(j in to_predict){
     cm <- cm_list[[j]]
     # ACCURACY
@@ -185,7 +192,8 @@ bnMetricsMultiVarPrediction <- function(reference, prediction, predProbList){
     ## OVA :: AUXILIAR VARs
     lvls <- names(ova_list[[j]])
     len_lvls <- length(lvls)
-    ## OVA :: LOOP INTO ALL l LEVELS FROM j VARIABLE TO CALCULATE METRICS FOR EACH LEVEL
+    ## OVA :: LOOP INTO ALL l LEVELS FROM j VARIABLE TO CALCULATE
+    # METRICS FOR EACH LEVEL
     for(l in lvls){
       ## AUXILIAR VARIABLE TO IMPROVE CODE READING
       ovaCM <- ova_list[[j]][[l]]
@@ -212,7 +220,8 @@ bnMetricsMultiVarPrediction <- function(reference, prediction, predProbList){
       f1s = c(f1s,f1s_unq)
       mcc = c(mcc,(mcc_num/sqrt(mcc_den)))
     }
-    ## OVA :: RESULT FOR EACH j VARIABLE BASED ON A MEAN FROM ALL OVA MATRIX FROM THAT VARIABLE i.e. ALL LEVELS OVA MATRIX
+    ## OVA :: RESULT FOR EACH j VARIABLE BASED ON A MEAN FROM ALL OVA
+    # MATRIX FROM THAT VARIABLE i.e. ALL LEVELS OVA MATRIX
     cmACC_ova <- 100*(sum(acc, na.rm = T)/len_lvls)
     cmSEN_ova <- 100*(sum(sen, na.rm = T)/len_lvls)
     cmSPE_ova <- 100*(sum(spe, na.rm = T)/len_lvls)

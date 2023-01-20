@@ -144,13 +144,11 @@ accurCalc <- function(df){
   #class_names <- c("L", "ML", "M", "MH", "H")
   class_names <- c("L", "M", "H")
   class_x1 <- defClasses(3, df$obs)
-  # class_x1 <- defClasses(3, df)
   class_x1[length(class_x1)] <- max(df)
   x1_class <- classficator(df, class_x1, class_names)
   x1_class$obs <- factor(x1_class$obs)
   x1_class$pred <- factor(x1_class$pred)
 
-  #teste <- caret::confusionMatrix(x1_class$pred, x1_class$obs)
   return((caret::confusionMatrix(x1_class$pred, x1_class$obs))$overall[1])
 }
 
